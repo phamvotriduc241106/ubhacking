@@ -175,9 +175,9 @@ input[type="range"].range {
 }
 
 /* Standalone report preview and A4 print output. */
-.folland-report { background: #fff; color: #173a2c; width: 100%; max-width: 210mm; margin: 0 auto; padding: clamp(20px, 4vw, 48px); font-family: Arial, sans-serif; font-size: 13px; line-height: 1.55; box-shadow: 0 15px 45px #0002; overflow-wrap: anywhere; }
+.folland-report { background: #fff; color: #173a2c; width: 100%; max-width: 210mm; margin: 0 auto; padding: clamp(20px, 4vw, 48px); font-family: "Inter Variable", system-ui, sans-serif; font-size: 13px; line-height: 1.65; box-shadow: 0 15px 45px #0002; overflow-wrap: anywhere; }
 .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #326b54; padding-bottom: 15px; }
-.report-brand { color: #326b54; font-size: 32px; font-weight: 800; letter-spacing: .12em; line-height: 1; }
+.report-brand { color: #326b54; font-family: "Sora Variable", "Inter Variable", sans-serif; font-size: 32px; font-weight: 750; letter-spacing: .08em; line-height: 1; }
 .report-subtitle { font-size: 11px; letter-spacing: .19em; font-weight: 700; margin-top: 8px; }
 .report-mark { background: #326b54; color: white; border-radius: 50%; padding: 10px 15px; font-size: 25px; }
 .report-intro { color: #668474; margin: 16px 0; font-size: 11px; letter-spacing: .04em; }
@@ -185,8 +185,8 @@ input[type="range"].range {
 .report-metadata { padding: 16px; background: #f1f6f2; margin-bottom: 22px; }
 .report-value span { display: block; color: #70877a; text-transform: uppercase; font-size: 9px; font-weight: 700; letter-spacing: .1em; }
 .report-value strong { display: block; font-weight: 600; }
-.report-section { margin: 17px 0; break-inside: avoid; }
-.report-bar { background: #326b54; color: white; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.report-section { margin: 20px 0; }
+.report-bar { background: #326b54; color: white; padding: 9px 12px; font-family: "Sora Variable", "Inter Variable", sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 650; break-after: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .report-bar span { opacity: .7; margin-right: 12px; }
 .report-section-body { padding: 12px 4px 0; }
 .report-section-body h4 { color: #326b54; text-transform: uppercase; font-weight: 700; font-size: 10px; letter-spacing: .06em; margin: 7px 0 4px; }
@@ -194,6 +194,13 @@ input[type="range"].range {
 .report-callout { background: #edf4ee; border-left: 3px solid #326b54; padding: 9px 12px; font-weight: 600; }
 .report-status { font-weight: 700; text-transform: capitalize; }
 .report-note { color: #647e70; font-size: 11px; }
+.report-chart { margin-top: 15px; padding: 14px; border: 1px solid #dce9e0; border-radius: 10px; background: #f7faf7; break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.report-chart figcaption { color: #326b54; font-family: "Sora Variable", "Inter Variable", sans-serif; font-weight: 650; font-size: 11px; margin-bottom: 10px; }
+.report-chart-row { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(60px, 3fr) 24px; align-items: center; gap: 9px; margin: 7px 0; font-size: 11px; }
+.report-chart-track { height: 11px; background: #e3ece5; border-radius: 10px; overflow: hidden; }
+.report-chart-bar { height: 100%; border-radius: 10px; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.report-chart-row strong { font-variant-numeric: tabular-nums; text-align: right; }
+.report-chart-empty { color: #647e70; font-size: 11px; }
 .report-list { list-style: disc; margin: 5px 0 0 18px; }
 .report-list li { margin: 4px 0; }
 .report-conclusion { background: #326b54; color: white; padding: 22px; margin-top: 24px; break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -201,12 +208,14 @@ input[type="range"].range {
 .report-conclusion h3 { font-size: 20px; font-weight: 700; margin: 5px 0; }
 .report-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; color: #326b54; font-size: 9px; font-weight: 700; letter-spacing: .1em; }
 .report-footer span { color: #819388; font-weight: 400; letter-spacing: 0; }
+#folland-print-root { display: none; }
 @media (max-width: 520px) { .report-columns { grid-template-columns: 1fr; } .report-brand { font-size: 25px; } }
 @media print {
   @page { size: A4; margin: 12mm; }
   html, body { height: auto !important; overflow: visible !important; background: white !important; }
-  body * { visibility: hidden !important; }
-  .folland-report, .folland-report * { visibility: visible !important; }
-  .folland-report { position: absolute; top: 0; left: 0; max-width: none; width: 100%; margin: 0; padding: 0; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  body > :not(#folland-print-root) { display: none !important; }
+  #folland-print-root { display: block !important; }
+  #folland-print-root .folland-report { position: static; max-width: none; width: 100%; margin: 0; padding: 0; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .report-section-body p, .report-list li { orphans: 2; widows: 2; }
   .report-columns, .report-metadata { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }

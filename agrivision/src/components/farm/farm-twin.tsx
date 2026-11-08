@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { Eye, Layers, Radio } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
@@ -35,7 +36,7 @@ export function FarmTwin() {
     <div>
       <PageHeader
         eyebrow="Digital twin"
-        title={<>Smart Farm <span className="text-gradient">Digital Twin</span></>}
+        title={<><Localized id="ui_80d121163c972ea8" fallback="Smart Farm" />{" "}<span className="text-gradient"><Localized id="ui_472e0a91cc92fbcc" fallback="Digital Twin" /></span></>}
         description="A living 3D model of 48 tomato plants across four zones. Orbit, zoom and click to inspect any plant or sensor node."
       >
         <WeatherSwitcher />
@@ -73,12 +74,10 @@ export function FarmTwin() {
             </div>
             <div className="glass pointer-events-auto flex items-center gap-3 rounded-full px-3 py-1.5 text-xs">
               <label className="flex items-center gap-2">
-                <Eye className="h-3.5 w-3.5" /> Health
-                <Switch checked={overlay} onCheckedChange={setOverlay} aria-label="Health overlay" className="scale-90" />
+                <Eye className="h-3.5 w-3.5" />{" "}<Localized id="ui_55898449eb74fb2e" fallback="Health" /><Switch checked={overlay} onCheckedChange={setOverlay} aria-label="Health overlay" className="scale-90" />
               </label>
               <label className="flex items-center gap-2">
-                <Radio className="h-3.5 w-3.5" /> Sensors
-                <Switch checked={sensors} onCheckedChange={setSensors} aria-label="Show sensors" className="scale-90" />
+                <Radio className="h-3.5 w-3.5" />{" "}<Localized id="ui_76140e34f635bb94" fallback="Sensors" /><Switch checked={sensors} onCheckedChange={setSensors} aria-label="Show sensors" className="scale-90" />
               </label>
             </div>
           </div>
@@ -88,7 +87,7 @@ export function FarmTwin() {
               {(Object.keys(HEALTH_META) as HealthStatus[]).map((k) => (
                 <span key={k} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full ring-2 ring-white/30" style={{ background: HEALTH_META[k].color }} />
-                  {HEALTH_META[k].label}
+                  <LocalizedText text={HEALTH_META[k].label} />
                 </span>
               ))}
             </div>

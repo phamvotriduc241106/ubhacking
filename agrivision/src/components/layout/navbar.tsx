@@ -13,9 +13,12 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { StatusPill } from "./status-pill";
 import { ThemeToggle } from "./theme-toggle";
+import { LanguageSelector } from "./language-selector";
+import { useTranslation } from "react-i18next";
 
 
 export function Navbar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -55,7 +58,7 @@ export function Navbar() {
                   {active && (
                     <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-foreground/[0.07]" transition={{ type: "spring", stiffness: 400, damping: 34 }} />
                   )}
-                  <span className="relative">{n.label}</span>
+                  <span className="relative">{t(n.href.slice(1), { defaultValue: n.label })}</span>
                 </Link>
               </li>
             );
@@ -68,6 +71,7 @@ export function Navbar() {
             </a>
           </Button>
           <StatusPill className="hidden sm:inline-flex" />
+          <div className="hidden lg:block"><LanguageSelector /></div>
           <ThemeToggle />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -79,6 +83,7 @@ export function Navbar() {
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <Logo />
               <StatusPill className="self-start" />
+              <LanguageSelector mobile />
               <ul className="mt-2 flex flex-col gap-1">
                 {[{ href: "/", label: "Home" }, ...NAV].map((n, i) => (
                   <motion.li key={n.href} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * i }}>
@@ -89,7 +94,7 @@ export function Navbar() {
                         (n.href === "/" ? pathname === "/" : pathname.startsWith(n.href)) ? "bg-primary/10 text-primary" : "hover:bg-foreground/5",
                       )}
                     >
-                      {n.label}
+                      {t(n.href === "/" ? "home" : n.href.slice(1), { defaultValue: n.label })}
                     </Link>
                   </motion.li>
                 ))}

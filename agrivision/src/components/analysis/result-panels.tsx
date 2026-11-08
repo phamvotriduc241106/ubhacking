@@ -2,11 +2,14 @@
 
 import { motion } from "framer-motion";
 import { Bot, CheckCircle2, ChevronRight, Droplets, FlaskConical, Leaf, Sun, Thermometer } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { OriginBadge } from "@/components/shared/origin-badge";
 import { ReportTemplate } from "./report-template";
 import type { AnalysisResult, CropCondition, EnvironmentRating, Ripeness, SensorReading } from "@/lib/types";
 import { cn, formatLux } from "@/lib/utils";
+import { printReport } from "@/lib/print-report";
+import { LocalizedText } from "@/i18n/localized";
+import { useTranslation } from "react-i18next";
 
 const CONDITIONS: { id: CropCondition; label: string; color: string }[] = [
   { id: "healthy", label: "Healthy", color: "#22c55e" },
@@ -29,7 +32,7 @@ function Panel({ title, icon, delay, children }: { title: string; icon: ReactNod
   return (
     <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }} className="glass rounded-3xl p-5">
       <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {icon} {title}
+        {icon} <LocalizedText text={title} />
       </p>
       {children}
     </motion.div>
@@ -51,7 +54,7 @@ function Scale<T extends string>({ options, value, delay }: { options: { id: T; 
             style={on ? { background: `${o.color}1f`, boxShadow: `0 0 0 1.5px ${o.color}` } : undefined}
           >
             <span className="h-3 w-3 rounded-full" style={{ background: o.color, boxShadow: on ? `0 0 14px ${o.color}` : "none" }} />
-            <span className={cn("text-[11px] font-semibold leading-tight", on ? "text-foreground" : "text-muted-foreground")}>{o.label}</span>
+            <span className={cn("text-[11px] font-semibold leading-tight", on ? "text-foreground" : "text-muted-foreground")}><LocalizedText text={o.label} /></span>
           </motion.div>
         );
       })}
@@ -60,6 +63,8 @@ function Scale<T extends string>({ options, value, delay }: { options: { id: T; 
 }
 
 export function ResultPanels({ result, reading, notice, preview }: { result: AnalysisResult; reading: SensorReading | null; notice?: string | null; preview?: string | null }) {
+  const { t, i18n } = useTranslation();
+  const reportRef = useRef<HTMLDivElement>(null);
   const isBackend = result.source === "backend";
   const isAI = result.source === "ai" || isBackend;
   const ripe = result.ripeness === "unknown" || result.ripeness === "not_applicable" ? null : result.ripeness;
@@ -94,7 +99,8 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
       </Panel>}
       {isBackend && result.report && <Panel title="Farmer report" icon={<Bot className="h-3.5 w-3.5" />} delay={0.04}>
         <p className="text-xs font-semibold text-muted-foreground">{result.report.source === "gemini" ? `AI-generated report · ${result.report.model ?? "Gemini model unavailable"} — review against the evidence` : `Rule-based fallback · Gemini ${result.report.gemini_status.replace(/_/g," ")}`}</p>
-        {result.report.sections && <><div className="my-4"><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => window.print()}>Print / Save as PDF</button></>}
+        {i18n.language !== "en" && <p className="mt-2 text-xs text-muted-foreground">{t("report_english_only")}</p>}
+        {result.report.sections && <><div className="my-4" ref={reportRef}><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => printReport(reportRef.current?.querySelector(".folland-report") ?? null)}>Print / Save as PDF</button></>}
         <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">View raw report</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p></details>
         <button type="button" className="mt-4 text-sm font-semibold text-primary hover:underline" onClick={() => { const u=URL.createObjectURL(new Blob([result.report!.text],{type:"text/plain"})); const a=document.createElement("a"); a.href=u; a.download="folland-report.txt"; a.click(); URL.revokeObjectURL(u); }}>Download report</button>
       </Panel>}
