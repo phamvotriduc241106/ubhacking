@@ -67,9 +67,6 @@ export function Navbar() {
           })}
         </ul>
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" asChild className="hidden md:inline-flex text-xs h-8 rounded-full border-primary/30 hover:border-primary/60">
-            <a href="http://localhost:5173" target="_blank" rel="noreferrer"><Localized id="ui_0563ce14dc6d11c7" fallback="FolLand Advisory" /></a>
-          </Button>
           <StatusPill className="hidden sm:inline-flex" />
           <Button variant="ghost" size="icon" asChild aria-label={`${urgent} active alerts`}>
             <Link href="/alerts" className="relative">
