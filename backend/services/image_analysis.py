@@ -299,5 +299,5 @@ Strict scientific guardrails:
                     observation_notes=parsed.get("detailed_description", "Analyzed via Gemini 2.5 Flash Multimodal Vision with live telemetry fusion.")
                 )
         except Exception as e:
-            print(f"Gemini Multimodal Vision API call error: {e}")
+            # Do not log provider errors: they may contain credentials or request data.
             return None

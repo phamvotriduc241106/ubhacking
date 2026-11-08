@@ -3,11 +3,12 @@ export type EvidenceType =
   | 'USER_REPORTED'
   | 'WEATHER_FORECAST'
   | 'NOT_MEASURED'
-  | 'OBSERVED';
+  | 'OBSERVED'
+  | 'PREDICTED';
 
 export interface SensorReading {
   source: string;
-  data_mode: 'simulated' | 'live' | 'unavailable';
+  data_mode: 'simulated' | 'live' | 'manual' | 'unavailable';
   received_at_utc: string;
   fresh: boolean;
   air_temperature_c: number | null;
@@ -90,6 +91,9 @@ export interface AnalysisResponse {
   harvest: RecommendationCardData;
   watering: RecommendationCardData;
   fertilizer: RecommendationCardData;
+  detector?: {status: string; message: string; width: number | null; height: number | null; counts: Record<string, number>; detections: Array<{box: number[]; label: string; confidence: number; uncertain: boolean; raw_label: string; rotten_check_probability: number | null}>};
+  disagreement?: string | null;
+  report?: {source: 'gemini' | 'deterministic'; text: string; gemini_status: string} | null;
   scientific_summary: string;
 }
 

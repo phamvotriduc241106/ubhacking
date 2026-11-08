@@ -1,0 +1,175 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/sora";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme: cream, sage, forest ink */
+    --background: 45 43% 96%;
+    --foreground: 150 40% 9%;
+    --card: 45 45% 98%;
+    --card-foreground: 150 40% 9%;
+    --popover: 45 45% 98%;
+    --popover-foreground: 150 40% 9%;
+    --primary: 158 72% 32%;
+    --primary-foreground: 45 45% 97%;
+    --secondary: 110 16% 86%;
+    --secondary-foreground: 150 40% 12%;
+    --muted: 80 18% 90%;
+    --muted-foreground: 150 10% 36%;
+    --accent: 43 54% 54%;
+    --accent-foreground: 150 40% 9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 110 14% 80%;
+    --input: 110 14% 80%;
+    --ring: 158 72% 36%;
+    --radius: 1.1rem;
+
+    --glass-bg: 45 50% 99% / 0.62;
+    --glass-border: 150 30% 20% / 0.1;
+    --glass-shadow: 150 40% 10% / 0.08;
+    --glow: 158 80% 40%;
+    --grid-line: 150 30% 20% / 0.06;
+    --chart-temp: #d97706;
+    --chart-hum: #0891b2;
+    --chart-light: #b38b1f;
+    --chart-rain: #2563eb;
+    --chart-growth: #059669;
+  }
+
+  .dark {
+    /* Dark theme: deep forest, emerald glow, charcoal */
+    --background: 150 45% 5%;
+    --foreground: 45 40% 94%;
+    --card: 150 38% 8%;
+    --card-foreground: 45 40% 94%;
+    --popover: 150 38% 8%;
+    --popover-foreground: 45 40% 94%;
+    --primary: 158 70% 48%;
+    --primary-foreground: 150 50% 6%;
+    --secondary: 150 25% 14%;
+    --secondary-foreground: 45 40% 92%;
+    --muted: 150 22% 13%;
+    --muted-foreground: 110 12% 66%;
+    --accent: 43 56% 58%;
+    --accent-foreground: 150 50% 6%;
+    --destructive: 0 70% 56%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 20% 18%;
+    --input: 150 20% 18%;
+    --ring: 158 70% 48%;
+
+    --glass-bg: 150 40% 9% / 0.55;
+    --glass-border: 120 40% 85% / 0.09;
+    --glass-shadow: 0 0% 0% / 0.4;
+    --glow: 158 80% 50%;
+    --grid-line: 120 40% 85% / 0.045;
+    --chart-temp: #fbbf24;
+    --chart-hum: #38bdf8;
+    --chart-light: #e6cc85;
+    --chart-rain: #60a5fa;
+    --chart-growth: #34d399;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+  }
+}
+
+@layer components {
+  .glass {
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 0 10px 40px -12px hsl(var(--glass-shadow)), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+  }
+
+  .glass-strong {
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    backdrop-filter: blur(28px) saturate(170%);
+    box-shadow: 0 24px 60px -20px hsl(var(--glass-shadow));
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(120deg, #6ee7b7 0%, #34d399 35%, #e6cc85 75%, #c9a54c 100%);
+  }
+
+  :root:not(.dark) .text-gradient {
+    background-image: linear-gradient(120deg, #047857 0%, #059669 40%, #a3802a 80%, #8a6a1f 100%);
+  }
+
+  .glow-ring {
+    box-shadow: 0 0 0 1px hsl(var(--glow) / 0.35), 0 0 32px -4px hsl(var(--glow) / 0.45);
+  }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--grid-line)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid-line)) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .bg-aurora {
+    background:
+      radial-gradient(60% 50% at 15% 10%, hsl(158 70% 40% / 0.18), transparent 60%),
+      radial-gradient(50% 40% at 85% 20%, hsl(43 60% 55% / 0.12), transparent 60%),
+      radial-gradient(70% 60% at 50% 100%, hsl(150 60% 25% / 0.2), transparent 70%);
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary;
+    background: hsl(var(--primary) / 0.1);
+    border: 1px solid hsl(var(--primary) / 0.2);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Recharts tooltip polish */
+.recharts-default-tooltip {
+  border-radius: 12px !important;
+}
+
+/* Range input used in a couple of lightweight places */
+input[type="range"].range {
+  accent-color: hsl(var(--primary));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

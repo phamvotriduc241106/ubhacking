@@ -1,6 +1,6 @@
 # FolLand user guide
 
-FolLand helps you check a tomato plant using a photo, a manual soil check, weather context, and practical guidance. It is a prototype: its sensor readings are simulated, and its recommendations are not a diagnosis or a substitute for a soil test or local expert.
+FolLand helps you check a tomato plant using a photo, a manual soil check, weather context, and practical guidance. It is a prototype: sensor readings are simulated by default, and recommendations are not a diagnosis or a substitute for a soil test or local expert.
 
 ## 1. Open the website
 
@@ -10,9 +10,9 @@ The computer setup and start commands are in the [README](../README.md). If the 
 
 ## 2. Understand the conditions
 
-The three cards near the top show local weather, air temperature, and air humidity. A badge identifies forecast, simulated, or unavailable data. Weather defaults to Buffalo, New York; an offline fallback uses sample values. Sensor values are currently simulated even if physical sensors are connected.
+The three cards near the top show local weather, air temperature, and air humidity. A badge identifies forecast, simulated, or unavailable data. Weather defaults to Buffalo, New York; an offline fallback uses sample values. Without a configured USB serial port, sensor values are simulated. With `FOLLAND_SERIAL_PORT` set on the server, compatible METRO serial readings appear as live; stale or disconnected readings appear unavailable.
 
-Air humidity is **not soil moisture**. Use your own soil check for the watering recommendation.
+Air humidity is **not soil moisture**. Optional air temperature and humidity under **More options** are user-reported inputs, not measurements from a connected probe. Use your own soil check for the watering recommendation.
 
 ### Change the weather location
 
@@ -31,9 +31,9 @@ The dashboard displays the weather service's fallback when the forecast cannot b
 
 ### Photo analysis setup
 
-Photo analysis requires a Gemini API key, configured by the person running the backend as `GEMINI_API_KEY` in the repository-root `.env` file. Alternatively, open **More options** and enter a key under **Photo analysis key**. A key entered on the page is held in page memory for that session; it is not saved by the redesigned interface. Use a trusted device and network: the local development server uses HTTP.
+The operator downloads the pretrained local model weights using `python scripts/download_models.py`. For Gemini, the operator sets `GEMINI_API_KEY` in the server's root `.env`. Do not enter keys into the website. Without Gemini, FolLand returns local model predictions and a labeled deterministic report, with harvest decisions limited when verification is missing.
 
-When photo analysis is used, the uploaded image and accompanying context are sent to Google Gemini. If there is no key, the external service fails, or the image cannot be analyzed, the result will say visual analysis is unavailable. A photo alone cannot establish soil moisture or nutrient levels.
+When photo analysis is used, the uploaded image and accompanying context are sent to Google Gemini. If there is no key or the external service fails, Gemini observation is unavailable; local model detection can still run when its weights are installed. A photo alone cannot establish soil moisture or nutrient levels.
 
 ### Optional details
 
@@ -41,7 +41,7 @@ Open **More options** to enter the tomato variety, choose whether you intend to 
 
 ## 4. Read the result
 
-The page shows the visual observation followed by three cards:
+The page shows model detections, an exportable report, and three cards. Predictions and their scores are not validated or calibrated for field conditions.
 
 - **Harvest:** visible maturity stage and a suggested next check. Variety and firmness matter; color alone is not enough.
 - **Watering:** advice based primarily on your soil selection. If the soil is unknown, check it before deciding.
@@ -65,7 +65,7 @@ The result is explicitly simulated: the chosen scenario determines the visual st
 | Phone cannot connect | Connect both devices to the same network, use the computer's network address rather than `localhost`, and check the computer firewall. |
 | Conditions do not load | Check the backend and frontend proxy. Weather may show a labeled sample when the external service is unavailable. |
 | Photo analysis unavailable | Check the Gemini key, internet access, image format, and backend logs. Use JPEG/PNG or the sample mode to continue the demo. |
-| I see simulated sensor values | This is expected: the current repository does not implement the physical serial bridge. |
+| I see simulated sensor values | This is expected unless the operator configures `FOLLAND_SERIAL_PORT` and connects a compatible serial feed. |
 | The result is uncertain or seems wrong | Retake a clear photo, check the plant and soil manually, and consult a local extension specialist when needed. |
 
 ## 7. Related documentation

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 class SensorReading(BaseModel):
     source: str = "metro328_simulated"
-    data_mode: Literal["simulated", "live", "unavailable"] = "simulated"
+    data_mode: Literal["simulated", "live", "manual", "unavailable"] = "simulated"
     received_at_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     fresh: bool = True
     air_temperature_c: Optional[float] = 23.8
@@ -50,7 +50,7 @@ class VisualObservation(BaseModel):
 
 
 class EvidenceItem(BaseModel):
-    type: Literal["SIMULATED", "USER_REPORTED", "WEATHER_FORECAST", "NOT_MEASURED", "OBSERVED"]
+    type: Literal["SIMULATED", "USER_REPORTED", "WEATHER_FORECAST", "NOT_MEASURED", "OBSERVED", "PREDICTED"]
     label: str
     detail: str
 
@@ -89,3 +89,42 @@ class AnalysisResponse(BaseModel):
     watering: RecommendationCard
     fertilizer: RecommendationCard
     scientific_summary: str
+    data_sources: dict[str, str] = Field(default_factory=dict)
+    detector: Optional["DetectorResult"] = None
+    gemini_observation: Optional["GeminiObservation"] = None
+    disagreement: Optional[str] = None
+    report: Optional["FarmerReport"] = None
+
+
+class FruitDetection(BaseModel):
+    box: List[float]
+    detection_confidence: float
+    label: Literal['raw', 'half_ripe', 'ripe', 'rotten']
+    confidence: float
+    raw_label: str
+    rotten_check_probability: Optional[float] = None
+    uncertain: bool
+
+
+class DetectorResult(BaseModel):
+    status: Literal['ok', 'unavailable', 'error', 'not_run']
+    message: str
+    width: Optional[int] = None
+    height: Optional[int] = None
+    detections: List[FruitDetection] = Field(default_factory=list)
+    counts: dict[str, int] = Field(default_factory=dict)
+
+
+class GeminiObservation(BaseModel):
+    tomato_visible: Optional[bool] = None
+    maturity_stage: Literal['raw', 'half_ripe', 'ripe', 'uncertain'] = 'uncertain'
+    fruit_description: str = ''
+    leaf_description: str = ''
+    leaf_symptoms: Literal['none', 'yellowing', 'browning_spots', 'wilting', 'unknown'] = 'unknown'
+    uncertainty: str = ''
+
+
+class FarmerReport(BaseModel):
+    gemini_status: str = 'unavailable'
+    source: Literal['gemini', 'deterministic']
+    text: str

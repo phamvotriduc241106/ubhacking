@@ -30,6 +30,11 @@ yarn-error.log*
 
 # Environment & Uploads
 .env
-.env.local
+.env.*
+!.env.example
 backend/uploads/
 uploads/
+
+# Downloaded model weights and datasets
+models/
+datasets/

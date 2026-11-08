@@ -1,0 +1,57 @@
+{
+  "dataset": "publisher-held-out classification crops; not an independent field sample",
+  "images": 768,
+  "accuracy": 0.80859375,
+  "confusion_matrix_rows_actual_columns_predicted": {
+    "raw": {
+      "raw": 152,
+      "half_ripe": 33,
+      "ripe": 1,
+      "rotten": 0
+    },
+    "half_ripe": {
+      "raw": 24,
+      "half_ripe": 276,
+      "ripe": 38,
+      "rotten": 1
+    },
+    "ripe": {
+      "raw": 1,
+      "half_ripe": 33,
+      "ripe": 154,
+      "rotten": 8
+    },
+    "rotten": {
+      "raw": 0,
+      "half_ripe": 1,
+      "ripe": 7,
+      "rotten": 39
+    }
+  },
+  "classes": {
+    "raw": {
+      "support": 186,
+      "precision": 0.8587570621468926,
+      "recall": 0.8172043010752689,
+      "f1": 0.837465564738292
+    },
+    "half_ripe": {
+      "support": 339,
+      "precision": 0.8046647230320699,
+      "recall": 0.8141592920353983,
+      "f1": 0.8093841642228738
+    },
+    "ripe": {
+      "support": 196,
+      "precision": 0.77,
+      "recall": 0.7857142857142857,
+      "f1": 0.7777777777777778
+    },
+    "rotten": {
+      "support": 47,
+      "precision": 0.8125,
+      "recall": 0.8297872340425532,
+      "f1": 0.8210526315789474
+    }
+  }
+}

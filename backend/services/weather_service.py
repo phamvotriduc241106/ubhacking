@@ -22,9 +22,9 @@ class WeatherService:
     ) -> WeatherSummary:
         lat = latitude if latitude is not None else cls.DEFAULT_LAT
         lon = longitude if longitude is not None else cls.DEFAULT_LON
-        name = location_name or cls.DEFAULT_NAME
+        name = location_name or (cls.DEFAULT_NAME if latitude is None and longitude is None else f"{lat:.4f}, {lon:.4f}")
 
-        cache_key = f"{round(lat, 2)}_{round(lon, 2)}"
+        cache_key = f"{lat}_{lon}_{name}"
         now = datetime.now(timezone.utc)
 
         # Check cache
@@ -62,8 +62,8 @@ class WeatherService:
                         longitude=lon,
                         temperature_c=current.get("temperature_2m"),
                         relative_humidity_pct=current.get("relative_humidity_2m"),
-                        rain_last_24h_mm=rain_last,
-                        rain_next_24h_mm=rain_next,
+                        rain_last_24h_mm=None,
+                        rain_next_24h_mm=None,
                         precipitation_sum_7d_mm=rain_7d,
                         weather_description=cls._interpret_weather_code(current.get("weather_code")),
                         source="open-meteo",
@@ -83,8 +83,8 @@ class WeatherService:
             longitude=lon,
             temperature_c=19.2,
             relative_humidity_pct=55.0,
-            rain_last_24h_mm=1.0,
-            rain_next_24h_mm=0.2,
+            rain_last_24h_mm=None,
+            rain_next_24h_mm=None,
             precipitation_sum_7d_mm=5.4,
             weather_description="Partly cloudy (Simulated demo fallback)",
             source="mock_fallback",

@@ -41,7 +41,8 @@ def test_weather_endpoint():
     response = client.get("/api/weather?latitude=42.88&longitude=-78.87")
     assert response.status_code == 200
     data = response.json()
-    assert "Buffalo" in data["location_name"] or data["is_fallback"] is True
+    assert data["latitude"] == 42.88 and data["longitude"] == -78.87
+    assert "42.8800, -78.8700" in data["location_name"]
     assert data["source"] in ["open-meteo", "mock_fallback"]
 
 

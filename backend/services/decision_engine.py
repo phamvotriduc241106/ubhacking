@@ -56,7 +56,7 @@ class DecisionEngine:
             f"with visual maturity stage '{visual.stage_label}'. "
             f"Physical soil status: '{soil_condition.replace('_', ' ')}'. "
             f"Ambient context: {sensors.air_temperature_c or 'N/A'}°C, {sensors.air_relative_humidity_pct or 'N/A'}% RH (data mode: {sensors.data_mode}). "
-            f"Weather forecast rain next 24h: {weather.rain_next_24h_mm or 0.0} mm. "
+            f"Weather source: {weather.source}; rolling rainfall values unavailable unless measured. "
             "All recommendations adhere to extension scientific guardrails: no soil moisture is inferred from air humidity, and no fertilizer is prescribed without soil testing."
         )
 
@@ -183,16 +183,16 @@ class DecisionEngine:
         # Sensor ambient context
         if sensors.air_relative_humidity_pct is not None:
             evidence.append(EvidenceItem(
-                type="SIMULATED",
+                type="USER_REPORTED" if sensors.data_mode == "manual" else "SIMULATED" if sensors.data_mode == "simulated" else "OBSERVED",
                 label="Air Microclimate",
                 detail=f"Air Temp: {sensors.air_temperature_c}°C, Air RH: {sensors.air_relative_humidity_pct}% (Context only, NOT soil moisture)"
             ))
 
         # Weather context
-        rain_info = f"Rain last 24h: {weather.rain_last_24h_mm or 0.0} mm | Rain next 24h: {weather.rain_next_24h_mm or 0.0} mm"
+        rain_info = "Rolling 24-hour rainfall is unavailable. Daily totals do not represent rolling 24-hour measurements."
         evidence.append(EvidenceItem(
-            type="WEATHER_FORECAST",
-            label="Open-Meteo Weather",
+            type="SIMULATED" if weather.is_fallback else "WEATHER_FORECAST",
+            label="Weather sample" if weather.is_fallback else "Open-Meteo Weather",
             detail=rain_info
         ))
 
@@ -207,7 +207,7 @@ class DecisionEngine:
         if soil_condition == "dry_at_5cm":
             status = "check_and_likely_water"
             title = "Check Soil & Likely Water"
-            recom = "Physical inspection confirms root-zone soil is dry. Irrigate at the soil line thoroughly."
+            recom = "The reported soil check suggests dryness. Consider watering at the soil line and check how deeply water penetrates."
             limitations = [
                 common_watering_limit,
                 "Container size and root depth alter exact water volume required."
@@ -216,7 +216,7 @@ class DecisionEngine:
         elif soil_condition == "moist":
             status = "monitor_conditions"
             title = "Soil Moisture Adequate — Monitor"
-            recom = "Root zone moisture is satisfactory. Withhold additional irrigation to prevent root hypoxia."
+            recom = "The reported soil check is moist. Monitor the soil before adding water."
             limitations = [
                 common_watering_limit,
                 "High temperatures and wind can rapidly deplete surface moisture. Relying on manual tactile check."
@@ -225,7 +225,7 @@ class DecisionEngine:
         elif soil_condition == "wet":
             status = "avoid_watering"
             title = "Soil Saturated — Avoid Additional Watering"
-            recom = "Excess moisture present. Additional watering risks root rot and fungal disease development."
+            recom = "The reported soil check is very wet. Additional watering could worsen waterlogging."
             limitations = [
                 common_watering_limit,
                 "Waterlogged roots cannot take up oxygen, causing symptoms that can mimic drought wilting."

@@ -1,35 +1,29 @@
-# Architecture and current implementation
+# Architecture and known limitations
 
-## Request flow
+## Analysis flow
 
-1. The React frontend requests sensor and weather summaries from FastAPI.
-2. An analysis request submits a photo or demo scenario and user-provided plant details.
-3. The backend obtains simulated sensor values and weather, optionally calls Gemini, and passes the resulting observations to the decision engine.
-4. The decision engine returns harvest, watering, and fertilizer cards with evidence and references from `knowledge/tomato_rules.json`.
+1. The React app submits a photo, soil observation, optional manual air values and optional coordinates to FastAPI.
+2. The backend checks image size and format, normalizes orientation, and runs the locally cached pretrained detector and per-fruit ripeness classifier. A second model checks rotten classifications.
+3. If a server-side key is configured, Gemini independently returns structured visual observations. Otherwise it is unavailable. Conflicts, low confidence, missing Gemini verification, mixed stages and possible rot cause harvest abstention.
+4. Deterministic rules produce harvest, watering and fertilizer cards. A separate Gemini call writes a report from structured evidence; if it fails or is not configured, a deterministic report is returned. The UI shows the report, detections and cards.
 
-The Vite development server proxies `/api` to `localhost:8000`. This proxy is a development configuration; a production deployment must serve or proxy the API separately.
+Model weights are loaded lazily once per process. See [model validation](model-validation.md) for results, reproducibility and licensing.
 
-## API
+## Environmental data
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/health` | Service and simulated sensor status |
-| `GET /api/sensors/latest` | Simulated sensor values; optional disconnected simulation |
-| `GET /api/weather` | Open-Meteo weather or mock fallback |
-| `POST /api/analyze` | Form-based plant analysis and recommendation cards |
+Sensors default to simulated readings. `FOLLAND_SERIAL_PORT` enables a 115200-baud METRO JSON reader; data older than 10 seconds becomes unavailable. Manual air readings are labeled user-reported and have no distance or canopy height. This serial path has not been tested on physical hardware. The starter firmware is in the [original proposal](mvp-proposal.md).
 
-Interactive request schemas are available at `/docs` on the backend.
+Open-Meteo uses a labeled sample fallback on error. Rolling 24-hour precipitation is unavailable rather than inferred from daily totals. The dashboard's selected coordinates are included in analysis requests.
 
 ## Known limitations
 
-- There is no physical sensor bridge or firmware in the current repository. The sensor service generates simulated values.
-- Weather's daily precipitation fields are currently presented as rolling 24-hour values, and recommendation evidence does not distinguish mock fallback from live weather.
-- The weather location selected in the dashboard is not sent with the analysis form; analysis defaults to Buffalo unless coordinates are supplied directly to the API.
-- The Gemini prompt describes the simulated sensor readings as live; some harvest-card text describes Gemini results as a demo scenario.
-- HEIC uploads are labeled as JPEG for Gemini without converting the image bytes. Real iPhone photo compatibility needs verification.
-- A UI-entered Gemini key is held in page memory. The local development setup uses HTTP.
-- Automated tests cover simulated behavior and API contracts, not field accuracy or physical hardware.
+- Maturity and quality models from the Mendeley dataset, greenhouse analysis, and NASA MODIS are unavailable. No source has been substituted for them.
+- Gemini's generated report is not guaranteed factual. Read the structured evidence and deterministic cards; there is no validation that generated prose preserves every rule.
+- Model scores are uncalibrated and the model has not been validated on farm photos or for food safety. Field images may differ substantially from its training data.
+- Live Gemini, real hardware, and a full real-world end-to-end workflow have not been verified. Tests use mocked external services except for the opt-in local model test.
+- The development setup uses HTTP and has no authentication. It is intended for a trusted local network, not public deployment.
+- HEIC decoding depends on installed image support; JPEG/PNG is recommended.
 
-## Proposal versus implementation
+## API
 
-The [original MVP proposal](mvp-proposal.md) is retained for product rationale, hardware research, and demo planning. Its recommended architecture, firmware examples, acceptance checklist, and roadmap are proposals; use the code and this document for current implementation status.
+`GET /api/health`, `GET /api/sensors/latest`, `GET /api/weather`, and `POST /api/analyze`. Interactive schemas are available at `/docs` on the backend. Vite proxies `/api` to the backend; set `VITE_BACKEND_URL` to change its target for local development.

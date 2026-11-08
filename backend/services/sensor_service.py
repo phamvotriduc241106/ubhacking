@@ -36,6 +36,11 @@ class SensorService:
                 notes="Sensor hardware or simulator feed is disconnected"
             )
 
+        from backend.services.serial_sensor import get_reading
+        live = get_reading()
+        if live is not None:
+            return live
+
         # Realistic subtle jitter around target ambient conditions
         temp = round(_simulated_base_temp + random.uniform(-0.4, 0.4), 1)
         rh = round(_simulated_base_rh + random.uniform(-1.2, 1.2), 1)
