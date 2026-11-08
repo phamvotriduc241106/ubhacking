@@ -19,9 +19,9 @@ export function StatusPill({ className }: { className?: string }) {
     : mode === "demo"
       ? { dot: "bg-gold-400", text: "Demo Mode", tip: "Showing realistic simulated sensor data. Switch to Integration Mode on the dashboard to connect real sensors." }
       : connection === "connected"
-        ? latest?.origin === "backend-simulated"
-          ? { dot: "bg-gold-400", text: "Connected · simulated", tip: message ?? "Endpoint reachable, but it reports simulated data." }
-          : { dot: "bg-emerald-400", text: "Live sensors", tip: "Receiving live readings from your sensor endpoint." }
+        ? latest?.origin === "live"
+          ? { dot: "bg-emerald-400", text: "Live sensors", tip: "Receiving live readings from your sensor endpoint." }
+          : { dot: "bg-gold-400", text: latest?.origin === "manual" ? "Manual readings" : latest?.origin === "unavailable" ? "Source unavailable" : "Connected · simulated", tip: message ?? "See the reading's source for details." }
         : connection === "connecting"
           ? { dot: "bg-yellow-400", text: "Connecting…", tip: "Contacting your sensor endpoint." }
           : { dot: "bg-red-500", text: "Sensor offline", tip: message ?? "The sensor endpoint did not respond." };

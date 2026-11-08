@@ -1,5 +1,6 @@
 """Build reports from validated analysis data; Gemini can only select safe narrative."""
 import re
+import os
 from backend.models import FarmerReport, ReportNarrative, ReportSections
 from backend.services.gemini_service import write_report
 
@@ -46,4 +47,4 @@ async def generate(visual, detector, observation, sensors, weather, decisions, d
             f'Environmental Conditions\nAir temperature: {sections.air_temperature_c if sections.air_temperature_c is not None else "unavailable"}; humidity: {sections.air_humidity_pct if sections.air_humidity_pct is not None else "unavailable"}. Source: {sections.sensor_source} ({sections.sensor_mode}). Weather: {sections.weather_source} ({sections.weather_mode}).\n\n'
             f'Watering Guidance\n{sections.watering}\n\nFertilizer and Plant Health\n{sections.fertilizer}\n\n'
             f'Recommended Next Actions\n' + '\n'.join(sections.next_actions) + '\n\nConfidence and Limitations\n' + '\n'.join(sections.limitations) + f'\n\nConclusion\n{sections.conclusion}')
-    return FarmerReport(source='gemini' if narrative else 'deterministic', text=text, gemini_status=status, sections=sections)
+    return FarmerReport(source='gemini' if narrative else 'deterministic', text=text, gemini_status=status, sections=sections, model=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash') if narrative else None)

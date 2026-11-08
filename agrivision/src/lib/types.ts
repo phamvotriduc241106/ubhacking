@@ -11,7 +11,7 @@ export type ZoneId = "A" | "B" | "C" | "D";
  * - live: reported by a sensor endpoint that says it is live hardware
  * - backend-simulated: fetched from an API, but that API reports its data is simulated
  */
-export type DataOrigin = "simulated" | "live" | "backend-simulated";
+export type DataOrigin = "simulated" | "live" | "backend-simulated" | "manual" | "unavailable";
 
 export interface SensorReading {
   timestamp: number;
@@ -81,7 +81,7 @@ export interface AnalysisResult {
   environment: EnvironmentRating;
   environmentNotes: string[];
   colorStats?: { red: number; orange: number; green: number; yellow: number; brown: number };
-  report?: { source: string; text: string; gemini_status: string; sections?: ReportSections | null } | null;
+  report?: { source: string; text: string; gemini_status: string; model?: string | null; sections?: ReportSections | null } | null;
   reportMeta?: { crop: string; date: string; id: string };
   disagreement?: string | null;
   detector?: { status: string; message: string; width: number | null; height: number | null; counts: Record<string, number>; detections: Array<{ box: number[]; label: string; confidence: number; uncertain: boolean; raw_label: string }> } | null;
@@ -133,6 +133,8 @@ export type EvidenceKind =
   | "sensor-simulated"
   | "sensor-live"
   | "sensor-backend-simulated"
+  | "sensor-manual"
+  | "sensor-unavailable"
   | "weather-historical"
   | "weather-forecast"
   | "weather-simulated"

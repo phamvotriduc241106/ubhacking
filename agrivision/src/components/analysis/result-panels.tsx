@@ -73,27 +73,31 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
         {isAI ? <Bot className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" /> : <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-gold-500" />}
         <div className="text-sm">
           <p className="font-semibold">{isBackend ? "FolLand analysis · review limitations" : isAI ? `AI analysis · ${result.provider}` : "DEMO RESULT — not an AI analysis"}</p>
-          <p className="text-foreground/70">{notice ?? (isBackend ? "Model and report availability are shown below; predictions are not diagnoses." : isAI ? "A connected vision model analyzed this photo." : "Labels come from a simple color heuristic in your browser and are not diagnoses.")}</p>
+          <p className="text-foreground/70">{notice ?? (isBackend ? `Vision: ${result.provider}. Predictions are not diagnoses.` : isAI ? "A connected vision model analyzed this photo." : "Labels come from a simple color heuristic in your browser and are not diagnoses.")}</p>
         </div>
       </motion.div>
 
-      {isBackend && result.detector && <Panel title="Detected fruit" icon={<Leaf className="h-3.5 w-3.5" />} delay={0}>
-        <p className="text-sm text-muted-foreground">{result.detector.message}</p>
-        <p className="mt-2 text-sm font-semibold">{result.detector.status === "ok" ? `${result.detector.detections.length} candidate fruit` : `Detector ${result.detector.status}`}</p>
-        {preview && result.detector.status === "ok" && result.detector.width && result.detector.height && <div className="relative mt-3 overflow-hidden rounded-xl"><img src={preview} alt="Tomato photo with detected fruit outlined" className="block h-auto w-full"/><svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${result.detector.width} ${result.detector.height}`} preserveAspectRatio="none" aria-hidden="true">{result.detector.detections.map((d,i) => <rect key={i} x={d.box[0]} y={d.box[1]} width={d.box[2]-d.box[0]} height={d.box[3]-d.box[1]} fill="none" stroke="#a5f36c" strokeWidth={Math.max(2,result.detector!.width!/300)}/>)}</svg></div>}
-        <ul className="mt-3 space-y-1 text-sm">{result.detector.detections.map((d,i) => <li key={i}>Fruit {i+1}: {d.label.replace(/_/g," ")} · model score {(d.confidence*100).toFixed(0)}%{d.uncertain ? " · uncertain" : ""}{d.raw_label !== d.label ? " · rotten check disagreed" : ""}</li>)}</ul>
-        {result.disagreement && <p className="mt-2 text-sm text-amber-600">{result.disagreement}</p>}
-      </Panel>}
-      {isBackend && result.report && <Panel title="Farmer report" icon={<Bot className="h-3.5 w-3.5" />} delay={0.04}>
-        <p className="text-xs font-semibold text-muted-foreground">{result.report.source === "gemini" ? "Gemini-generated report — review against evidence below" : `Rule-based fallback · Gemini ${result.report.gemini_status.replace(/_/g," ")}`}</p>
-        {result.report.sections && <><div className="my-4"><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => window.print()}>Print / Save as PDF</button></>}
-        <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">View raw report</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p></details>
-        <button type="button" className="mt-4 text-sm font-semibold text-primary hover:underline" onClick={() => { const u=URL.createObjectURL(new Blob([result.report!.text],{type:"text/plain"})); const a=document.createElement("a"); a.href=u; a.download="folland-report.txt"; a.click(); URL.revokeObjectURL(u); }}>Download report</button>
+      {isBackend && result.detector?.status === "ok" && result.detector.detections.length > 0 && <Panel title="Harvest summary · AI predictions" icon={<Leaf className="h-3.5 w-3.5" />} delay={0}>
+        <p className="text-sm">{result.detector.detections.filter(d => d.label === "ripe").length} apparently ripe · {result.detector.detections.filter(d => d.label === "half_ripe").length} half-ripe · {result.detector.detections.filter(d => d.label === "raw").length} unripe</p>
+        <p className="mt-2 text-xs text-muted-foreground">Predictions need a physical check; color cannot establish exact ripeness or food safety.</p>
       </Panel>}
       {isBackend && result.recommendations?.map(card => <Panel key={card.category} title={card.category} icon={<CheckCircle2 className="h-3.5 w-3.5"/>} delay={0.06}>
         <h3 className="font-semibold">{card.title}</h3><p className="mt-2 text-sm">{card.recommendation}</p><p className="mt-2 text-sm"><strong>Next:</strong> {card.next_action}</p>
         <details className="mt-3 text-xs text-muted-foreground"><summary className="cursor-pointer">Limitations and sources</summary>{card.limitations.map((l,i)=><p key={i} className="mt-2">{l}</p>)}{card.references.map(ref=><a className="mt-2 block text-primary underline" key={ref.id} href={ref.url} target="_blank" rel="noreferrer">{ref.title}</a>)}</details>
       </Panel>)}
+      {isBackend && result.detector && <Panel title="Detected fruit" icon={<Leaf className="h-3.5 w-3.5" />} delay={0}>
+        <p className="text-sm text-muted-foreground">{result.detector.message}</p>
+        <p className="mt-2 text-sm font-semibold">{result.detector.status === "ok" ? `${result.detector.detections.length} candidate fruit` : `Detector ${result.detector.status}`}</p>
+        {preview && result.detector.status === "ok" && result.detector.width && result.detector.height && <div className="relative mt-3 overflow-hidden rounded-xl"><img src={preview} alt="Tomato photo with detected fruit outlined" className="block h-auto w-full"/><svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${result.detector.width} ${result.detector.height}`} preserveAspectRatio="none" aria-hidden="true">{result.detector.detections.map((d,i) => { const size = Math.max(12, result.detector!.width! / 38); const x = Math.max(0, Math.min(d.box[0], result.detector!.width! - size * 1.7)); const y = Math.max(0, Math.min(d.box[1], result.detector!.height! - size * 1.25)); return <g key={i}><rect x={d.box[0]} y={d.box[1]} width={d.box[2]-d.box[0]} height={d.box[3]-d.box[1]} fill="none" stroke="#a5f36c" strokeWidth={Math.max(2,result.detector!.width!/300)}/><rect x={x} y={y} width={size * 1.7} height={size * 1.25} rx={size * 0.2} fill="#071d12" stroke="#a5f36c" strokeWidth={Math.max(1, size / 12)}/><text x={x + size * 0.85} y={y + size * 0.91} textAnchor="middle" fill="white" fontSize={size} fontWeight="bold">{i+1}</text></g>; })}</svg></div>}
+        <p className="mt-3 text-xs text-muted-foreground">Scores are uncalibrated model outputs, not probabilities of correctness.</p><ul className="mt-3 space-y-1 text-sm">{result.detector.detections.map((d,i) => <li key={i}>Fruit {i+1}: {d.label.replace(/_/g," ")} · uncalibrated score {d.confidence.toFixed(2)}{d.uncertain ? " · uncertain" : ""}{d.raw_label !== d.label ? " · rotten check disagreed" : ""}</li>)}</ul>
+        {result.disagreement && <p className="mt-2 text-sm text-amber-600">{result.disagreement}</p>}
+      </Panel>}
+      {isBackend && result.report && <Panel title="Farmer report" icon={<Bot className="h-3.5 w-3.5" />} delay={0.04}>
+        <p className="text-xs font-semibold text-muted-foreground">{result.report.source === "gemini" ? `AI-generated report · ${result.report.model ?? "Gemini model unavailable"} — review against the evidence` : `Rule-based fallback · Gemini ${result.report.gemini_status.replace(/_/g," ")}`}</p>
+        {result.report.sections && <><div className="my-4"><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => window.print()}>Print / Save as PDF</button></>}
+        <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">View raw report</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p></details>
+        <button type="button" className="mt-4 text-sm font-semibold text-primary hover:underline" onClick={() => { const u=URL.createObjectURL(new Blob([result.report!.text],{type:"text/plain"})); const a=document.createElement("a"); a.href=u; a.download="folland-report.txt"; a.click(); URL.revokeObjectURL(u); }}>Download report</button>
+      </Panel>}
       <Panel title="Crop condition" icon={<Leaf className="h-3.5 w-3.5" />} delay={0.05}>
         <Scale options={CONDITIONS} value={result.cropCondition === "unknown" ? null : result.cropCondition} delay={0.1} />
         <ul className="mt-3 space-y-1 text-sm">
@@ -120,7 +124,7 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
               <motion.div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-gold-400" initial={{ width: 0 }} animate={{ width: `${result.confidence.value * 100}%` }} transition={{ duration: 1, delay: 0.3 }} />
             )}
           </div>
-          {!result.confidence && <p className="mt-1.5 text-[11px] text-muted-foreground">The demo heuristic does not produce a calibrated confidence score.</p>}
+          {!result.confidence && <p className="mt-1.5 text-[11px] text-muted-foreground">A calibrated confidence estimate is not available.</p>}
         </div>
       </Panel>
 
