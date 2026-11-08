@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "Monitoreo de cultivos asistido por IA para productores de tomate: un gemelo digital 3D, paneles de sensores de IoT, análisis de fotografías e inteligencia meteorológica.",
   "ui_c78ffe19571018fb": "Plataforma",
   "ui_9b8197f3d9d1b528": "Sobre los datos",
-  "ui_6779a62f2fca38e1": "El modo de demostración genera lecturas de sensores simuladas en su navegador. El tiempo proviene de Open-Meteo cuando es accesible; de lo contrario, es una simulación etiquetada.",
+  "ui_6779a62f2fca38e1": "El modo de demostración genera datos simulados de sensores. Los datos meteorológicos provienen de Open-Meteo; si no están disponibles, se indica.",
   "ui_fcd46e4b7c36180e": "Los resultados de las fotografías se etiquetan como IA solo cuando un modelo conectado analiza la imagen. Este prototipo es un apoyo a la decisión, no un diagnóstico agronómico validado.",
   "ui_6130d5a5c619111d": "FolLand · Monitoreo inteligente de cultivos y granja 3D",
   "ui_0563ce14dc6d11c7": "Aviso de seguimiento",

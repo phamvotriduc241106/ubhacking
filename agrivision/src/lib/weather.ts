@@ -1,13 +1,14 @@
 import type { WeatherData, WeatherDay, WeatherHour } from "./types";
-import { mulberry32 } from "./utils";
 
 export interface Location {
   name: string;
   latitude: number;
   longitude: number;
+  timezone?: string;
 }
 
 export const LOCATIONS: Location[] = [
+  { name: "Petrolina, Brazil", latitude: -9.3891, longitude: -40.5031, timezone: "America/Recife" },
   { name: "Buffalo, NY", latitude: 42.8864, longitude: -78.8784 },
   { name: "Salinas, CA", latitude: 36.6777, longitude: -121.6555 },
   { name: "Almería, Spain", latitude: 36.834, longitude: -2.4637 },
@@ -19,7 +20,8 @@ export const PAST_DAYS = 14;
 export const FORECAST_DAYS = 7;
 
 /** WMO weather interpretation codes, condensed. */
-export function describeCode(code: number): { label: string; kind: "sun" | "partly" | "cloud" | "fog" | "rain" | "snow" | "storm" } {
+export function describeCode(code: number | null): { label: string; kind: "sun" | "partly" | "cloud" | "fog" | "rain" | "snow" | "storm" } {
+  if (code == null) return { label: "Unavailable", kind: "cloud" };
   if (code === 0) return { label: "Clear", kind: "sun" };
   if (code <= 2) return { label: "Partly cloudy", kind: "partly" };
   if (code === 3) return { label: "Overcast", kind: "cloud" };
@@ -42,103 +44,61 @@ export function locationNow(w: Pick<WeatherData, "utcOffsetSeconds">, offsetMs =
   return { date: t.slice(0, 10), hour: t.slice(0, 13) };
 }
 
-/** Browser-local YYYY-MM-DD / YYYY-MM-DDTHH:MM, used for the simulated fallback. */
-const pad = (n: number) => String(n).padStart(2, "0");
-const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const localMinute = (d: Date) => `${localDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-export async function fetchWeather(loc: Location, signal?: AbortSignal): Promise<WeatherData> {
-  const params = new URLSearchParams({
-    latitude: String(loc.latitude),
-    longitude: String(loc.longitude),
-    current: "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
-    hourly: "temperature_2m,relative_humidity_2m,precipitation",
-    daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,relative_humidity_2m_mean",
-    past_days: String(PAST_DAYS),
-    forecast_days: String(FORECAST_DAYS),
-    timezone: "auto",
+/** Parse the API's local timestamps using its returned UTC offset. */
+export function latestHourlyIndex(times: unknown, offsetSeconds: number, now = Date.now()): number | null {
+  if (!Array.isArray(times)) return null;
+  let bestTime = -Infinity, bestIndex: number | null = null;
+  times.forEach((value, index) => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return;
+    const instant = Date.parse(value + ":00Z") - offsetSeconds * 1000;
+    if (Number.isFinite(instant) && instant <= now && instant > bestTime) { bestTime = instant; bestIndex = index; }
   });
-  const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal });
-  if (!res.ok) throw new Error(`Open-Meteo returned ${res.status}`);
-  const j = await res.json();
-  const utcOffsetSeconds: number = typeof j.utc_offset_seconds === "number" ? j.utc_offset_seconds : 0;
-  const today = locationNow({ utcOffsetSeconds }).date;
-  const days: WeatherDay[] = j.daily.time.map((d: string, i: number) => ({
-    date: d,
-    tMax: j.daily.temperature_2m_max[i],
-    tMin: j.daily.temperature_2m_min[i],
-    humidity: j.daily.relative_humidity_2m_mean?.[i] ?? NaN,
-    precipitation: j.daily.precipitation_sum[i] ?? 0,
-    code: j.daily.weather_code[i],
-    isForecast: d > today,
-  }));
-  const hours: WeatherHour[] = j.hourly.time.map((t: string, i: number) => ({
-    time: t,
-    temp: j.hourly.temperature_2m[i],
-    humidity: j.hourly.relative_humidity_2m[i],
-    precipitation: j.hourly.precipitation[i] ?? 0,
-  }));
+  return bestIndex;
+}
+
+const number = (v: unknown): number | null => typeof v === "number" && Number.isFinite(v) ? v : null;
+const at = (arr: unknown, index: number | null): number | null => index !== null && Array.isArray(arr) ? number(arr[index]) : null;
+
+export function parseWeather(j: any, loc: Location, now = Date.now()): WeatherData {
+  if (!j || !j.current || !j.hourly || !Array.isArray(j.hourly.time)) throw new Error("Incomplete weather response");
+  const offset = number(j.utc_offset_seconds);
+  const utcOffsetSeconds = offset ?? 0;
+  const today = new Date(now + utcOffsetSeconds * 1000).toISOString().slice(0, 10);
+  const index = offset === null ? null : latestHourlyIndex(j.hourly.time, offset, now);
+  const dailyTimes = Array.isArray(j.daily?.time) ? j.daily.time : [];
+  const days: WeatherDay[] = dailyTimes.flatMap((date: unknown, i: number) => {
+    const tMax = at(j.daily.temperature_2m_max, i), tMin = at(j.daily.temperature_2m_min, i);
+    const humidity = at(j.daily.relative_humidity_2m_mean, i), precipitation = at(j.daily.precipitation_sum, i), code = at(j.daily.weather_code, i);
+    return typeof date === "string" && tMax !== null && tMin !== null && humidity !== null && precipitation !== null && code !== null ? [{date, tMax, tMin, humidity, precipitation, code, isForecast: date > today}] : [];
+  });
+  const hours: WeatherHour[] = j.hourly.time.flatMap((time: unknown, i: number) => {
+    const temp = at(j.hourly.temperature_2m, i), humidity = at(j.hourly.relative_humidity_2m, i), precipitation = at(j.hourly.precipitation, i);
+    return typeof time === "string" && temp !== null && humidity !== null && precipitation !== null ? [{time, temp, humidity, precipitation}] : [];
+  });
+  const recent = hours.filter(h => { const instant = Date.parse(h.time + ":00Z") - utcOffsetSeconds * 1000; return instant <= now && instant > now - 24 * 3600000; });
+  const rain24 = offset !== null && recent.length === 24 && new Set(recent.map(h => h.time)).size === 24 ? recent.reduce((sum, h) => sum + h.precipitation, 0) : null;
   return {
-    source: "open-meteo",
-    locationName: loc.name,
-    latitude: loc.latitude,
-    longitude: loc.longitude,
-    fetchedAt: Date.now(),
-    utcOffsetSeconds,
-    current: {
-      temp: j.current.temperature_2m,
-      humidity: j.current.relative_humidity_2m,
-      code: j.current.weather_code,
-      wind: j.current.wind_speed_10m,
-    },
-    days: days.filter((d) => !Number.isNaN(d.tMax)),
-    hours,
+    source: "open-meteo", locationName: loc.name, latitude: loc.latitude, longitude: loc.longitude,
+    fetchedAt: now, utcOffsetSeconds, timezone: typeof j.timezone === "string" ? j.timezone : loc.timezone ?? "UTC",
+    current: { temp: number(j.current.temperature_2m), humidity: number(j.current.relative_humidity_2m), code: number(j.current.weather_code), wind: number(j.current.wind_speed_10m), precipitation: number(j.current.precipitation), time: typeof j.current.time === "string" ? j.current.time : null },
+    soil: { temperature: at(j.hourly.soil_temperature_0cm, index), moisture: at(j.hourly.soil_moisture_0_to_1cm, index), time: index === null ? null : j.hourly.time[index] },
+    rain24, days, hours,
   };
 }
 
-/** Labeled fallback used when the weather service cannot be reached. */
-export function simulateWeather(loc: Location): WeatherData {
-  const rand = mulberry32(Math.floor(Date.now() / 86400000) + Math.round(loc.latitude * 100));
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const days: WeatherDay[] = [];
-  for (let i = -PAST_DAYS; i < FORECAST_DAYS; i++) {
-    const d = new Date(now.getTime() + i * 86400000);
-    const wet = rand() < 0.28;
-    const base = 24 + Math.sin(i / 4) * 3;
-    days.push({
-      date: localDate(d),
-      tMax: +(base + rand() * 3 - (wet ? 3 : 0)).toFixed(1),
-      tMin: +(base - 9 + rand() * 2).toFixed(1),
-      humidity: Math.round(58 + rand() * 12 + (wet ? 18 : 0)),
-      precipitation: wet ? +(rand() * 18 + 1).toFixed(1) : rand() < 0.2 ? +(rand() * 1.5).toFixed(1) : 0,
-      code: wet ? 61 : rand() < 0.4 ? 2 : rand() < 0.5 ? 3 : 0,
-      isForecast: i > 0,
-    });
-  }
-  const hours: WeatherHour[] = [];
-  for (let h = -PAST_DAYS * 24; h < FORECAST_DAYS * 24; h++) {
-    const t = new Date(now.getTime() + h * 3600000);
-    const hod = t.getHours();
-    const phase = Math.sin(((hod - 9) / 24) * Math.PI * 2);
-    hours.push({
-      time: localMinute(t),
-      temp: +(19 + 6 * phase + rand()).toFixed(1),
-      humidity: Math.round(68 - 16 * phase + rand() * 4),
-      precipitation: rand() < 0.04 ? +(rand() * 2).toFixed(1) : 0,
-    });
-  }
-  const todayIdx = PAST_DAYS;
-  return {
-    source: "simulated",
-    locationName: loc.name,
-    latitude: loc.latitude,
-    longitude: loc.longitude,
-    fetchedAt: Date.now(),
-    // The simulation is generated in the browser's local time.
-    utcOffsetSeconds: -new Date().getTimezoneOffset() * 60,
-    current: { temp: days[todayIdx].tMax - 2, humidity: days[todayIdx].humidity, code: days[todayIdx].code, wind: 9 },
-    days,
-    hours,
-  };
+export async function fetchWeather(loc: Location, signal?: AbortSignal): Promise<WeatherData> {
+  const params = new URLSearchParams({ latitude: String(loc.latitude), longitude: String(loc.longitude),
+    current: "temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
+    hourly: "temperature_2m,relative_humidity_2m,precipitation,soil_temperature_0cm,soil_moisture_0_to_1cm",
+    daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,relative_humidity_2m_mean",
+    past_days: String(PAST_DAYS), forecast_days: String(FORECAST_DAYS), timezone: loc.timezone ?? "auto" });
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) controller.abort(); else signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(abort, 10000);
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: controller.signal, cache: "no-store" });
+    if (!res.ok) throw new Error(`Open-Meteo returned ${res.status}`);
+    return parseWeather(await res.json(), loc);
+  } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
 }

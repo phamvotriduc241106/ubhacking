@@ -34,7 +34,7 @@ async def generate(visual, detector, observation, sensors, weather, decisions, d
         air_temperature_c=sensors.air_temperature_c, air_humidity_pct=sensors.air_relative_humidity_pct,
         sensor_source=sensors.source, sensor_mode=sensors.data_mode,
         weather_description=weather.weather_description, weather_temperature_c=weather.temperature_c,
-        weather_source=weather.source, weather_mode='simulated' if weather.is_fallback else 'current',
+        weather_source=weather.source, weather_mode='unavailable' if weather.source == 'unavailable' else 'simulated' if weather.is_fallback else 'current model',
         watering=water.recommendation, watering_evidence=[f'{e.type}: {e.label} — {e.detail}' for e in water.evidence],
         fertilizer=fertilizer.recommendation, fertilizer_limitations=fertilizer.limitations,
         next_actions=[harvest.next_action, water.next_action, fertilizer.next_action], limitations=limitations,

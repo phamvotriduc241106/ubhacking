@@ -43,7 +43,7 @@ def test_weather_endpoint():
     data = response.json()
     assert data["latitude"] == 42.88 and data["longitude"] == -78.87
     assert "42.8800, -78.8700" in data["location_name"]
-    assert data["source"] in ["open-meteo", "mock_fallback"]
+    assert data["source"] in ["open-meteo", "unavailable"]
 
 
 def test_analyze_endpoint_with_red_demo():

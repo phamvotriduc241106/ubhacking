@@ -66,7 +66,7 @@ npm run build
 ## Current boundaries
 
 - Sensor readings are simulated unless `FOLLAND_SERIAL_PORT` is configured for a compatible METRO JSON serial feed. Live hardware has not been tested; stale serial data is unavailable. Firmware remains a starter example in the original proposal.
-- Weather falls back to labeled mock data when the external service is unavailable. Review [known limitations](docs/architecture.md#known-limitations) before relying on weather evidence.
+- Weather is unavailable when Open-Meteo cannot be reached. Its modeled values, including surface soil moisture, are not on-farm measurements. Review [known limitations](docs/architecture.md#known-limitations) before relying on weather evidence.
 - The pretrained detector/classifier runs locally after weights are downloaded. Gemini requires a server-side key; absent or failed calls use an explicitly labeled fallback. Demo scenarios do not analyze photo pixels.
 - Air humidity is not soil moisture. Visual symptoms do not establish nutrient deficiencies.
 

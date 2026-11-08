@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "Domates yetiştiricileri için yapay zeka destekli mahsul izleme: 3 boyutlu dijital ikiz, IoT sensör kontrol panelleri, fotoğraf analizi ve hava durumu zekası.",
   "ui_c78ffe19571018fb": "platformu",
   "ui_9b8197f3d9d1b528": "Veriler hakkında",
-  "ui_6779a62f2fca38e1": "Demo Modu, tarayıcınızda simüle edilmiş sensör okumaları oluşturur. Hava durumu, ulaşılabilir olduğunda Open-Meteo'dan gelir, aksi takdirde etiketli bir simülasyondur.",
+  "ui_6779a62f2fca38e1": "Demo modu benzetilmiş sensör verileri üretir. Hava durumu verileri Open-Meteo’dan gelir; kullanılamadığında belirtilir.",
   "ui_fcd46e4b7c36180e": "Fotoğraf sonuçları yalnızca bağlı bir model görüntüyü analiz ettiğinde AI olarak etiketlenir. Bu prototip, doğrulanmış bir tarımsal teşhis değil, karar desteğidir.",
   "ui_6130d5a5c619111d": "FolLand · Akıllı Mahsul İzleme ve 3D Çiftlik",
   "ui_0563ce14dc6d11c7": "FolLand Danışmanlığı",

@@ -17,16 +17,23 @@ class SensorReading(BaseModel):
 
 
 class WeatherSummary(BaseModel):
-    location_name: str = "Buffalo, NY"
-    latitude: float = 42.8864
-    longitude: float = -78.8784
-    temperature_c: Optional[float] = 18.5
-    relative_humidity_pct: Optional[float] = 58.0
-    rain_last_24h_mm: Optional[float] = 1.2
-    rain_next_24h_mm: Optional[float] = 0.4
-    precipitation_sum_7d_mm: Optional[float] = Field(6.8, description="Total rain over the 7 completed days before today (mm), not a forecast.")
-    weather_description: Optional[str] = "Partly cloudy"
-    source: str = "open-meteo"
+    location_name: str = "Petrolina, Brazil"
+    latitude: float = -9.3891
+    longitude: float = -40.5031
+    temperature_c: Optional[float] = None
+    relative_humidity_pct: Optional[float] = None
+    rain_last_24h_mm: Optional[float] = None
+    rain_next_24h_mm: Optional[float] = None
+    precipitation_sum_7d_mm: Optional[float] = Field(None, description="Total precipitation over seven completed days, if all days are available.")
+    weather_description: Optional[str] = None
+    current_precipitation_mm: Optional[float] = None
+    wind_speed_kmh: Optional[float] = None
+    soil_temperature_c: Optional[float] = None
+    soil_moisture_m3_m3: Optional[float] = None
+    observation_time: Optional[str] = None
+    soil_time: Optional[str] = None
+    timezone: Optional[str] = None
+    source: str = "unavailable"
     retrieved_at_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     is_fallback: bool = False
 

@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "Giám sát cây trồng được hỗ trợ bởi AI dành cho người trồng cà chua: bộ đôi kỹ thuật số 3D, bảng điều khiển cảm biến IoT, phân tích ảnh và thông tin thời tiết.",
   "ui_c78ffe19571018fb": "Nền tảng",
   "ui_9b8197f3d9d1b528": "Về dữ liệu",
-  "ui_6779a62f2fca38e1": "Chế độ Demo tạo ra các kết quả đọc cảm biến mô phỏng trong trình duyệt của bạn. Thời tiết đến từ Open-Meteo khi có thể truy cập được, nếu không thì mô phỏng được gắn nhãn.",
+  "ui_6779a62f2fca38e1": "Chế độ demo tạo dữ liệu cảm biến mô phỏng. Dữ liệu thời tiết đến từ Open-Meteo; khi không có dữ liệu, ứng dụng sẽ báo không khả dụng.",
   "ui_fcd46e4b7c36180e": "Kết quả ảnh chỉ được gắn nhãn là AI khi mô hình được kết nối phân tích hình ảnh. Nguyên mẫu này là hỗ trợ quyết định, không phải là chẩn đoán nông học đã được xác nhận.",
   "ui_6130d5a5c619111d": "FolLand · Giám sát cây trồng thông minh & trang trại 3D",
   "ui_0563ce14dc6d11c7": "Tư vấn FolLand",

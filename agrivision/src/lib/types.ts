@@ -123,7 +123,10 @@ export interface WeatherData {
   fetchedAt: number;
   /** Offset of the location's local time from UTC. Daily dates and hourly times are in local time. */
   utcOffsetSeconds: number;
-  current: { temp: number; humidity: number; code: number; wind: number };
+  timezone: string;
+  current: { temp: number | null; humidity: number | null; code: number | null; wind: number | null; precipitation: number | null; time: string | null };
+  soil: { temperature: number | null; moisture: number | null; time: string | null };
+  rain24: number | null;
   days: WeatherDay[];
   hours: WeatherHour[];
 }

@@ -28,7 +28,7 @@ export function Footer() {
         </div>
         <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
           <p className="text-xs font-semibold uppercase tracking-[0.18em]"><Localized id="ui_9b8197f3d9d1b528" fallback="About the data" /></p>
-          <p><Localized id="ui_6779a62f2fca38e1" fallback="Demo Mode generates simulated sensor readings in your browser. Weather comes from Open-Meteo when reachable, otherwise a labeled simulation." /></p>
+          <p><Localized id="ui_6779a62f2fca38e1" fallback="Demo Mode generates simulated sensor readings. Weather data comes from Open-Meteo; unavailable weather is shown as unavailable." /></p>
           <p><Localized id="ui_fcd46e4b7c36180e" fallback="Photo results are labeled as AI only when a connected model analyzed the image. This prototype is decision support, not a validated agronomic diagnosis." /></p>
         </div>
       </div>

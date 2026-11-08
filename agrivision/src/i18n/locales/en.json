@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "AI-assisted crop monitoring for tomato growers: a 3D digital twin, IoT sensor dashboards, photo analysis and weather intelligence.",
   "ui_c78ffe19571018fb": "Platform",
   "ui_9b8197f3d9d1b528": "About the data",
-  "ui_6779a62f2fca38e1": "Demo Mode generates simulated sensor readings in your browser. Weather comes from Open-Meteo when reachable, otherwise a labeled simulation.",
+  "ui_6779a62f2fca38e1": "Demo Mode generates simulated sensor readings. Weather data comes from Open-Meteo; unavailable weather is shown as unavailable.",
   "ui_fcd46e4b7c36180e": "Photo results are labeled as AI only when a connected model analyzed the image. This prototype is decision support, not a validated agronomic diagnosis.",
   "ui_6130d5a5c619111d": "FolLand · Intelligent Crop Monitoring & 3D Farm",
   "ui_0563ce14dc6d11c7": "FolLand Advisory",

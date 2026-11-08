@@ -10,7 +10,7 @@ The computer setup and start commands are in the [README](../README.md). If the 
 
 ## 2. Understand the conditions
 
-The three cards near the top show local weather, air temperature, and air humidity. A badge identifies forecast, simulated, or unavailable data. Weather defaults to Buffalo, New York; an offline fallback uses sample values. Without a configured USB serial port, sensor values are simulated. With `FOLLAND_SERIAL_PORT` set on the server, compatible METRO serial readings appear as live; stale or disconnected readings appear unavailable.
+The three cards near the top show local weather, air temperature, and air humidity. A badge identifies modeled, simulated, or unavailable data. New users default to Petrolina, Brazil; existing saved locations are preserved. If weather cannot be retrieved, it is unavailable. Without a configured USB serial port, sensor values are simulated. With `FOLLAND_SERIAL_PORT` set on the server, compatible METRO serial readings appear as live; stale or disconnected readings appear unavailable.
 
 Air humidity is **not soil moisture**. Optional air temperature and humidity under **More options** are user-reported inputs, not measurements from a connected probe. Use your own soil check for the watering recommendation.
 
@@ -20,7 +20,7 @@ Air humidity is **not soil moisture**. Optional air temperature and humidity und
 2. Enter latitude from −90 to 90 and longitude from −180 to 180 in decimal degrees.
 3. Select **Update**. The selected coordinates are also sent with the next plant check.
 
-The dashboard displays the weather service's fallback when the forecast cannot be fetched. The forecast service uses daily precipitation totals; the current backend does not calculate true rolling 24-hour rainfall. Do not use its rainfall numbers as measured rainfall for your plant.
+Weather is unavailable if the forecast cannot be fetched. Recent 24-hour precipitation is calculated only from 24 available hourly model values, and must not be treated as rainfall measured at your plant. Soil moisture is a modeled surface estimate, not a root-zone sensor reading.
 
 ## 3. Check a plant
 
