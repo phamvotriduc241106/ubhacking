@@ -39,6 +39,7 @@ def test_webp_is_reencoded_as_jpeg_for_vision(monkeypatch):
 
 
 def test_report_still_runs_when_vision_times_out(monkeypatch):
+    monkeypatch.setenv('GEMINI_MODEL', 'gemini-test-model')
     monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(None, 'timeout')))
     monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
     monkeypatch.setattr('backend.services.report_generator.write_report', AsyncMock(return_value=('Report text', 'available')))
@@ -46,6 +47,7 @@ def test_report_still_runs_when_vision_times_out(monkeypatch):
     assert data['data_sources']['gemini_vision'] == 'timeout'
     assert data['gemini_observation'] is None
     assert data['report']['source'] == 'gemini'
+    assert data['report']['model'] == 'gemini-test-model'
 
 @pytest.mark.parametrize('label,stage',[('raw','green'),('half_ripe','turning'),('ripe','red')])
 def test_detection_classes(monkeypatch,label,stage):
@@ -82,6 +84,47 @@ def test_multiple_fruits_different_stages_are_uncertain(monkeypatch):
     monkeypatch.setattr('backend.app.infer_image',lambda _:d)
     monkeypatch.setattr('backend.app.observe',AsyncMock(return_value=(GeminiObservation(tomato_visible=True), 'available')))
     result=post().json(); assert len(result['detector']['detections'])==2 and result['harvest']['status']=='inspect_manually'
+
+
+def test_mixed_fruit_counts_and_cautious_harvest_guidance(monkeypatch):
+    d = detection('ripe')
+    d['detections'] = [detection(label)['detections'][0] for label in ['ripe'] * 8 + ['half_ripe'] + ['raw'] * 4]
+    d['counts'] = {}  # Derive advice from the actual per-fruit predictions.
+    monkeypatch.setattr('backend.app.infer_image', lambda _: d)
+    monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(GeminiObservation(tomato_visible=True), 'available')))
+    data = post().json()
+    assert data['harvest']['status'] == 'inspect_manually'
+    assert '8 ripe, 1 half-ripe, 4 unripe' in data['harvest']['recommendation']
+    assert 'apparently ripe tomatoes first' in data['harvest']['recommendation']
+    assert any('food safety' in text for text in data['harvest']['limitations'])
+    assert data['detector']['detections'][0]['confidence'] == .9
+
+
+def test_all_ripe_and_configured_model_provenance(monkeypatch):
+    monkeypatch.setenv('GEMINI_MODEL', 'gemini-test-model')
+    monkeypatch.setattr('backend.app.infer_image', lambda _: detection('ripe'))
+    monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(GeminiObservation(tomato_visible=True, maturity_stage='ripe', leaf_symptoms='yellowing'), 'available')))
+    data = post().json()
+    assert data['harvest']['status'] == 'likely_ready'
+    assert '1 ripe, 0 half-ripe, 0 unripe' in data['harvest']['recommendation']
+    assert data['visual_observations']['ai_provider'] == 'gemini-test-model'
+    assert any(item['type'] == 'PREDICTED' for item in data['fertilizer']['evidence'])
+
+
+def test_disagreement_and_rotten_are_not_prioritized_for_harvest(monkeypatch):
+    for item, obs in [(detection('ripe'), GeminiObservation(tomato_visible=False)), (detection('ripe', raw_label='rotten'), GeminiObservation(tomato_visible=True))]:
+        monkeypatch.setattr('backend.app.infer_image', lambda _, value=item: value)
+        monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(obs, 'available')))
+        harvest = post().json()['harvest']
+        assert harvest['status'] == 'inspect_manually'
+        assert 'apparently ripe tomatoes first' not in harvest['recommendation']
+
+
+def test_missing_detector_never_fabricates_counts(monkeypatch):
+    monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
+    harvest = post().json()['harvest']
+    assert harvest['status'] == 'inspect_manually'
+    assert 'AI-predicted candidates' not in harvest['recommendation']
 
 def test_serial_parser_provenance_and_invalid_values():
     from backend.services.serial_sensor import parse_reading

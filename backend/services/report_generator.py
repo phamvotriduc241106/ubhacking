@@ -1,3 +1,4 @@
+import os
 from backend.models import FarmerReport
 from backend.services.gemini_service import write_report
 
@@ -12,7 +13,7 @@ async def generate(visual, detector, observation, sensors, weather, decisions, d
     evidence = {'visual': visual.model_dump(), 'detector': detector.model_dump(), 'gemini_observation': observation.model_dump() if observation else None, 'sensors': sensors.model_dump(), 'weather': weather.model_dump(), 'decisions': {k:v.model_dump() for k,v in decisions.items() if k in ('harvest','watering','fertilizer')}, 'disagreement': disagreement, 'quality_model':'unavailable', 'greenhouse':'unavailable', 'nasa':'unavailable'}
     text, status = await write_report(evidence)
     if text:
-        return FarmerReport(source='gemini', text=text, gemini_status=status)
+        return FarmerReport(source='gemini', text=text, gemini_status=status, model=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash'))
     harvest, water, fert = (decisions[k] for k in ('harvest','watering','fertilizer'))
     text = (f"Overall Plant Assessment\n{visual.observation_notes}\n\n"
             f"Ripeness and Harvest Readiness\n{harvest.title}: {harvest.recommendation}\n\n"

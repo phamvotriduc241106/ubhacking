@@ -166,7 +166,7 @@ class ImageAnalysisService:
         crop: Optional[str] = "tomato"
     ) -> Optional[VisualObservation]:
         """
-        Calls Gemini 2.5 Flash multimodal vision API to fuse the visual image
+        Calls the configured Gemini multimodal vision model to fuse the visual image
         WITH real environmental hardware telemetry (temp, humidity, ultrasonic distance)
         and local weather forecasts.
         """
@@ -253,7 +253,7 @@ Strict scientific guardrails:
                 effective_mime = mime_type if mime_type.startswith("image/") else "image/jpeg"
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash'),
                 contents=[
                     types.Part.from_bytes(
                         data=image_bytes,
@@ -291,13 +291,13 @@ Strict scientific guardrails:
                     stage_label=f"Gemini Vision: {parsed.get('stage_label', parsed.get('plant_identified', 'Analyzed'))}",
                     visual_confidence=confidence,
                     is_simulated=False,
-                    ai_provider="gemini-2.5-flash",
+                    ai_provider=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash'),
                     detected_plant=parsed.get("plant_identified"),
                     detected_leaf_color=parsed.get("leaf_color"),
                     detected_leaf_symptoms=leaf_symp_raw,
                     leaf_condition_summary=parsed.get("leaf_condition_summary"),
                     ai_multimodal_synthesis=parsed.get("multimodal_synthesis"),
-                    observation_notes=parsed.get("detailed_description", "Analyzed via Gemini 2.5 Flash Multimodal Vision with live telemetry fusion.")
+                    observation_notes=parsed.get("detailed_description", "Analyzed via Gemini multimodal vision with supplied environmental context.")
                 )
         except Exception as e:
             # Do not log provider errors: they may contain credentials or request data.

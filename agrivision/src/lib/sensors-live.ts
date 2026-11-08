@@ -1,4 +1,5 @@
-import type { DataOrigin, SensorReading, WeatherCondition } from "./types";
+import type { SensorReading, WeatherCondition } from "./types";
+import { dataOrigin } from "./data-origin";
 
 /**
  * Integration mode: poll any HTTP endpoint that returns JSON. Two shapes are accepted:
@@ -11,8 +12,8 @@ import type { DataOrigin, SensorReading, WeatherCondition } from "./types";
  *    { "air_temperature_c": 23.8, "air_relative_humidity_pct": 62.5,
  *      "ultrasonic_distance_cm": 34.2, "canopy_height_proxy_cm": 15.8, "data_mode": "simulated" }
  *
- * Readings are labeled "live" only when the payload says so; otherwise they are
- * labeled "backend-simulated" so demo data is never presented as hardware data.
+ * Readings retain their reported provenance. An unrecognized source is unavailable,
+ * never silently presented as live or simulated.
  */
 export async function fetchLiveReading(endpoint: string, condition: WeatherCondition, signal?: AbortSignal): Promise<SensorReading> {
   const res = await fetch(endpoint, { signal, cache: "no-store" });
@@ -28,8 +29,7 @@ export async function fetchLiveReading(endpoint: string, condition: WeatherCondi
     if (j.status === "disconnected" || j.data_mode === "unavailable") throw new Error("Sensor reports it is disconnected");
     throw new Error("Payload is missing temperature or humidity");
   }
-  const isLive = j.live === true || j.data_mode === "live";
-  const origin: DataOrigin = isLive ? "live" : "backend-simulated";
+  const origin = dataOrigin(j.data_mode, j.live);
   return {
     timestamp: Date.now(),
     temperatureC,

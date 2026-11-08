@@ -40,7 +40,7 @@ class VisualObservation(BaseModel):
     stage_label: str = "Visual analysis unavailable"
     visual_confidence: Literal["high", "medium", "low", "none"] = "none"
     is_simulated: bool = True
-    ai_provider: Optional[str] = None  # "gemini-2.5-flash" or "demo_scenario" or None
+    ai_provider: Optional[str] = None  # Configured model identifier, demo_scenario, or None.
     detected_plant: Optional[str] = None
     detected_leaf_color: Optional[str] = None  # e.g. "Dark vibrant green", "Pale yellow (chlorosis)", "Brown necrotic tips"
     detected_leaf_symptoms: Optional[str] = None
@@ -128,3 +128,4 @@ class FarmerReport(BaseModel):
     gemini_status: str = 'unavailable'
     source: Literal['gemini', 'deterministic']
     text: str
+    model: Optional[str] = None
