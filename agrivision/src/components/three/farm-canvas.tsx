@@ -65,7 +65,7 @@ export default function FarmCanvas({ variant, className, onSelectPlant, onSelect
       onPointerDown={() => setEngaged(true)}
       onPointerLeave={() => variant === "hero" && setEngaged(false)}
     >
-      <SceneBoundary onRetry={remount}>
+      <SceneBoundary onRetry={remount} onError={onReady}>
       <Canvas
         key={`${quality}-${generation}`}
         shadows={high}
