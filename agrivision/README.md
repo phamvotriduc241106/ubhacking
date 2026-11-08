@@ -45,9 +45,9 @@ The app works on its own in **Demo Mode**. No hardware, API key or backend is ne
 In a second terminal, from the repository root:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate   # Windows: py -m venv .venv; .venv\Scripts\Activate.ps1
 pip install -r backend/requirements.txt
-uvicorn backend.app:app --host 0.0.0.0 --port 8001
+uvicorn backend.app:app --host 0.0.0.0 --port 8000
 ```
 
 The Next.js app proxies `/api/folland/*` to `http://127.0.0.1:8000/api/*` (override with `FOLLAND_API_URL`). With the backend running, photo analysis returns local model results and the backend report. Gemini runs only if a valid server-side `GEMINI_API_KEY` is configured; otherwise the backend returns an explicitly labeled deterministic report. The separately selectable demo uses a labeled in-browser color heuristic.

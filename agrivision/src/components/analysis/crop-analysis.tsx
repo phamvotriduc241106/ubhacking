@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { aiAnalysis, checkBackend, demoAnalysis, measureColors, type BackendStatus } from "@/lib/analysis";
 import { useApp } from "@/lib/store";
+import { timeoutSignal } from "@/lib/timeout-signal";
 import type { AnalysisResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ResultPanels } from "./result-panels";
@@ -35,7 +36,7 @@ export function CropAnalysis() {
 
   const probe = useCallback(async () => {
     setBackend(null);
-    const s = await checkBackend(AbortSignal.timeout(4000));
+    const s = await checkBackend(timeoutSignal(4000));
     setBackend(s);
     if (s.reachable) setEngine("ai");
   }, []);

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fetchLiveReading } from "@/lib/sensors-live";
 import { useApp } from "@/lib/store";
+import { timeoutSignal } from "@/lib/timeout-signal";
 import { cn } from "@/lib/utils";
 
 export function IntegrationPanel() {
@@ -28,7 +29,7 @@ export function IntegrationPanel() {
   const runTest = async () => {
     setTest({ state: "testing" });
     try {
-      const r = await fetchLiveReading(draft, "sunny", AbortSignal.timeout(6000));
+      const r = await fetchLiveReading(draft, "sunny", timeoutSignal(6000));
       setTest({
         state: "ok",
         text: `${r.temperatureC.toFixed(1)} °C · ${r.humidityPct.toFixed(0)}% RH${r.lightLux != null ? ` · ${r.lightLux} lux` : ""} — ${r.origin === "live" ? "reports live hardware" : "reports simulated data"}`,
