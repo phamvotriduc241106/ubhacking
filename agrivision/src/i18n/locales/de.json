@@ -593,5 +593,13 @@
   "auth_description": "Verstehen Sie Ihre Pflanzen und treffen Sie bessere Entscheidungen.",
   "auth_privacy": "Ihre Kontodaten werden zur Anmeldung verwendet.",
   "auth_unconfigured": "Die Anmeldung ist nicht konfiguriert.",
-  "auth_created": "Konto erstellt"
+  "auth_created": "Konto erstellt",
+  "manual_intro": "Optional: eigene Luftmesswerte eingeben. Luftfeuchtigkeit ist nicht Bodenfeuchtigkeit.",
+  "manual_temperature": "Lufttemperatur",
+  "manual_humidity": "Relative Luftfeuchtigkeit (%)",
+  "manual_optional": "Optional",
+  "manual_unit": "Temperatureinheit",
+  "manual_invalid": "Temperatur von −40 bis 85 °C (−40 bis 185 °F) und Luftfeuchtigkeit von 0 bis 100 % eingeben.",
+  "manual_origin": "Vom Nutzer angegeben",
+  "manual_partial": "Für eine Gesamtbewertung werden Lufttemperatur und Luftfeuchtigkeit benötigt."
 }

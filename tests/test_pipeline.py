@@ -53,6 +53,14 @@ def test_manual_environment_and_validation(monkeypatch):
     assert any(e['type']=='USER_REPORTED' and e['label']=='Air Microclimate' for e in data['watering']['evidence'])
     assert post(manual_humidity_pct='101').status_code==422
 
+def test_partial_manual_environment_and_soil(monkeypatch):
+    monkeypatch.setattr('backend.app.infer_image',lambda _:{'status':'unavailable','message':'missing','detections':[],'counts':{}})
+    result=post(manual_temperature_c='0',soil_condition='dry_at_5cm').json()
+    assert result['sensor_data']['data_mode']=='manual'
+    assert result['sensor_data']['air_temperature_c']==0
+    assert result['sensor_data']['air_relative_humidity_pct'] is None
+    assert result['soil_condition']=='dry_at_5cm'
+
 def test_multiple_fruits_different_stages_are_uncertain(monkeypatch):
     d=detection('ripe'); d2=detection('raw')['detections'][0]; d['detections'].append(d2); d['counts']['raw']=1
     monkeypatch.setattr('backend.app.infer_image',lambda _:d)

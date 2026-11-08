@@ -140,12 +140,15 @@ export async function aiAnalysis(
   locale: string,
   reading: SensorReading | null,
   t: Thresholds,
+  manual: { temperatureC: number | null; humidityPct: number | null },
 ): Promise<AnalysisResult> {
   const fd = new FormData();
   fd.append("image", file);
   fd.append("crop", "tomato");
   fd.append("soil_condition", soilCondition);
   fd.append("locale", locale);
+  if (manual.temperatureC !== null) fd.append("manual_temperature_c", String(manual.temperatureC));
+  if (manual.humidityPct !== null) fd.append("manual_humidity_pct", String(manual.humidityPct));
   const res = await fetch("/api/folland/analyze", { method: "POST", body: fd });
   if (!res.ok) {
     let detail = `Backend returned ${res.status}`;
@@ -158,11 +161,12 @@ export async function aiAnalysis(
   const ripeness: AnalysisResult["ripeness"] = stage === "red" ? "ripe" : stage === "turning" ? "turning" : stage === "green" ? "unripe" : "unknown";
   const symptoms = [j.gemini_observation?.leaf_description, j.gemini_observation?.uncertainty].filter((x): x is string => typeof x === "string" && x.length > 0);
   const sensor = j.sensor_data;
+  const origin = sensor?.data_mode === "manual" ? "user-reported" : sensor?.data_mode === "live" ? "live" : "backend-simulated";
   const actualReading: SensorReading | null = sensor && typeof sensor.air_temperature_c === "number" && typeof sensor.air_relative_humidity_pct === "number" ? {
     timestamp: Date.parse(sensor.received_at_utc) || Date.now(), temperatureC: sensor.air_temperature_c,
     humidityPct: sensor.air_relative_humidity_pct, lightLux: null, distanceCm: sensor.ultrasonic_distance_cm ?? null,
     canopyHeightCm: sensor.canopy_height_proxy_cm ?? null, condition: reading?.condition ?? "sunny",
-    origin: sensor.data_mode === "live" ? "live" : "backend-simulated",
+    origin,
   } : null;
   const env = rateEnvironment(actualReading, t);
   const recommendations = [j.harvest, j.watering, j.fertilizer].filter(Boolean);
@@ -176,5 +180,6 @@ export async function aiAnalysis(
     suggestions: recommendations.map((card: {next_action: string}) => card.next_action).filter(Boolean),
     environment: env.rating, environmentNotes: env.notes,
     report: j.report, detector: j.detector, disagreement: j.disagreement, recommendations, analysisSensor: actualReading,
+    analysisMeasurements: sensor ? { temperatureC: sensor.air_temperature_c ?? null, humidityPct: sensor.air_relative_humidity_pct ?? null, origin } : undefined,
   };
 }

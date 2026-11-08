@@ -593,5 +593,13 @@
   "auth_description": "了解作物，做出更好的农业决策。",
   "auth_privacy": "账户信息用于登录。",
   "auth_unconfigured": "尚未配置登录。",
-  "auth_created": "账户创建日期"
+  "auth_created": "账户创建日期",
+  "manual_intro": "可选：输入您测量的空气数据。空气湿度不等于土壤湿度。",
+  "manual_temperature": "空气温度",
+  "manual_humidity": "空气相对湿度（%）",
+  "manual_optional": "可选",
+  "manual_unit": "温度单位",
+  "manual_invalid": "输入 −40 至 85 °C（−40 至 185 °F）的温度和 0 至 100% 的湿度。",
+  "manual_origin": "用户提供",
+  "manual_partial": "综合评估需要空气温度和湿度。"
 }

@@ -593,5 +593,13 @@
   "auth_description": "Comprenez vos cultures et prenez de meilleures décisions agricoles.",
   "auth_privacy": "Vos informations servent à vous connecter.",
   "auth_unconfigured": "La connexion n’est pas configurée.",
-  "auth_created": "Compte créé"
+  "auth_created": "Compte créé",
+  "manual_intro": "Facultatif : saisissez vos mesures de l’air. L’humidité de l’air ne mesure pas celle du sol.",
+  "manual_temperature": "Température de l’air",
+  "manual_humidity": "Humidité relative de l’air (%)",
+  "manual_optional": "Facultatif",
+  "manual_unit": "Unité de température",
+  "manual_invalid": "Saisissez une température de −40 à 85 °C (−40 à 185 °F) et une humidité de 0 à 100 %.",
+  "manual_origin": "Données de l’utilisateur",
+  "manual_partial": "Une évaluation globale nécessite la température et l’humidité de l’air."
 }

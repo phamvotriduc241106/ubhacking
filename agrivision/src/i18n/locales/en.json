@@ -593,5 +593,13 @@
   "auth_description": "Understand your crops and make better farming decisions.",
   "auth_privacy": "Your account information is used to sign you in.",
   "auth_unconfigured": "Sign-in is not configured.",
-  "auth_created": "Account created"
+  "auth_created": "Account created",
+  "manual_intro": "Optional: enter your own air readings. Air humidity is not soil moisture.",
+  "manual_temperature": "Air temperature",
+  "manual_humidity": "Air relative humidity (%)",
+  "manual_optional": "Optional",
+  "manual_unit": "Temperature unit",
+  "manual_invalid": "Enter a temperature from −40 to 85 °C (−40 to 185 °F) and humidity from 0 to 100%.",
+  "manual_origin": "User-reported",
+  "manual_partial": "An overall rating needs both air temperature and humidity."
 }

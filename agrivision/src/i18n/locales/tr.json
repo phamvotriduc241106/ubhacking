@@ -593,5 +593,13 @@
   "auth_description": "Ürünlerinizi anlayın ve daha iyi tarım kararları alın.",
   "auth_privacy": "Hesap bilgileriniz giriş için kullanılır.",
   "auth_unconfigured": "Giriş yapılandırılmamış.",
-  "auth_created": "Hesap oluşturuldu"
+  "auth_created": "Hesap oluşturuldu",
+  "manual_intro": "İsteğe bağlı: kendi hava ölçümlerinizi girin. Hava nemi toprak nemi değildir.",
+  "manual_temperature": "Hava sıcaklığı",
+  "manual_humidity": "Bağıl hava nemi (%)",
+  "manual_optional": "İsteğe bağlı",
+  "manual_unit": "Sıcaklık birimi",
+  "manual_invalid": "−40 ile 85 °C (−40 ile 185 °F) arasında sıcaklık ve %0 ile %100 arasında nem girin.",
+  "manual_origin": "Kullanıcının bildirdiği",
+  "manual_partial": "Genel değerlendirme için hava sıcaklığı ve nemi gerekir."
 }

@@ -593,5 +593,13 @@
   "auth_description": "Comprende tus cultivos y toma mejores decisiones agrícolas.",
   "auth_privacy": "La información de tu cuenta se usa para iniciar sesión.",
   "auth_unconfigured": "El inicio de sesión no está configurado.",
-  "auth_created": "Cuenta creada"
+  "auth_created": "Cuenta creada",
+  "manual_intro": "Opcional: introduce tus mediciones del aire. La humedad del aire no es humedad del suelo.",
+  "manual_temperature": "Temperatura del aire",
+  "manual_humidity": "Humedad relativa del aire (%)",
+  "manual_optional": "Opcional",
+  "manual_unit": "Unidad de temperatura",
+  "manual_invalid": "Introduce una temperatura entre −40 y 85 °C (−40 y 185 °F) y una humedad entre 0 y 100 %.",
+  "manual_origin": "Datos del usuario",
+  "manual_partial": "La evaluación general necesita la temperatura y la humedad del aire."
 }

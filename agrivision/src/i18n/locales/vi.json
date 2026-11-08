@@ -593,5 +593,13 @@
   "auth_description": "Hiểu cây trồng và đưa ra quyết định tốt hơn.",
   "auth_privacy": "Thông tin tài khoản được dùng để đăng nhập.",
   "auth_unconfigured": "Chưa cấu hình đăng nhập.",
-  "auth_created": "Ngày tạo tài khoản"
+  "auth_created": "Ngày tạo tài khoản",
+  "manual_intro": "Tùy chọn: nhập số đo không khí của bạn. Độ ẩm không khí không phải độ ẩm đất.",
+  "manual_temperature": "Nhiệt độ không khí",
+  "manual_humidity": "Độ ẩm tương đối của không khí (%)",
+  "manual_optional": "Tùy chọn",
+  "manual_unit": "Đơn vị nhiệt độ",
+  "manual_invalid": "Nhập nhiệt độ từ −40 đến 85 °C (−40 đến 185 °F) và độ ẩm từ 0 đến 100%.",
+  "manual_origin": "Người dùng cung cấp",
+  "manual_partial": "Cần cả nhiệt độ và độ ẩm không khí để đánh giá tổng thể."
 }

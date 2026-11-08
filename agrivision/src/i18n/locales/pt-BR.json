@@ -593,5 +593,13 @@
   "auth_description": "Entenda suas plantações e tome melhores decisões.",
   "auth_privacy": "As informações da conta são usadas para entrar.",
   "auth_unconfigured": "O login não está configurado.",
-  "auth_created": "Conta criada"
+  "auth_created": "Conta criada",
+  "manual_intro": "Opcional: informe suas medições do ar. Umidade do ar não é umidade do solo.",
+  "manual_temperature": "Temperatura do ar",
+  "manual_humidity": "Umidade relativa do ar (%)",
+  "manual_optional": "Opcional",
+  "manual_unit": "Unidade de temperatura",
+  "manual_invalid": "Informe temperatura de −40 a 85 °C (−40 a 185 °F) e umidade de 0 a 100%.",
+  "manual_origin": "Informado pelo usuário",
+  "manual_partial": "A avaliação geral precisa da temperatura e da umidade do ar."
 }

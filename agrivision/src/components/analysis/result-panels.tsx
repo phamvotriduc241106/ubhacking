@@ -64,6 +64,7 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
   const {t, i18n}=useTranslation();
   const isBackend = result.source === "backend";
   const isAI = result.source === "ai" || isBackend;
+  const measurements = result.source === "backend" ? result.analysisMeasurements : undefined;
   const ripe = result.ripeness === "unknown" || result.ripeness === "not_applicable" ? null : result.ripeness;
   return (
     <div className="grid gap-4">
@@ -145,11 +146,11 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
       </Panel>
 
       <Panel title="Environmental conditions" icon={<Thermometer className="h-3.5 w-3.5" />} delay={0.19}>
-        <Scale options={ENVS} value={result.environment} delay={0.25} />
+        <Scale options={ENVS} value={measurements && (measurements.temperatureC === null || measurements.humidityPct === null) ? null : result.environment} delay={0.25} />
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           {[
-            { icon: Thermometer, v: reading ? `${reading.temperatureC.toFixed(1)}°C` : "—", l: "Air" },
-            { icon: Droplets, v: reading ? `${reading.humidityPct.toFixed(0)}%` : "—", l: "RH" },
+            { icon: Thermometer, v: (measurements ? measurements.temperatureC : reading?.temperatureC) != null ? `${(measurements ? measurements.temperatureC! : reading!.temperatureC).toFixed(1)}°C` : "—", l: "Air" },
+            { icon: Droplets, v: (measurements ? measurements.humidityPct : reading?.humidityPct) != null ? `${(measurements ? measurements.humidityPct! : reading!.humidityPct).toFixed(0)}%` : "—", l: "RH" },
             { icon: Sun, v: reading?.lightLux != null ? formatLux(reading.lightLux) : "—", l: "Lux" },
           ].map((m) => (
             <div key={m.l} className="rounded-xl bg-foreground/[0.04] py-2">
@@ -160,9 +161,9 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
           ))}
         </div>
         <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-          {result.environmentNotes.map((n) => <li key={n}>• <LocalizedText text={n} /></li>)}
+          {measurements && (measurements.temperatureC === null || measurements.humidityPct === null) ? <li>• {t("manual_partial")}</li> : result.environmentNotes.map((n) => <li key={n}>• <LocalizedText text={n} /></li>)}
         </ul>
-        <OriginBadge origin={reading?.origin} className="mt-3" />
+        {(measurements || reading) && <OriginBadge origin={measurements?.origin ?? reading?.origin} className="mt-3" />}
       </Panel>
 
       <Panel title="Suggestions" icon={<CheckCircle2 className="h-3.5 w-3.5" />} delay={0.26}>

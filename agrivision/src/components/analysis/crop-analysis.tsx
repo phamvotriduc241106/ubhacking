@@ -29,6 +29,9 @@ export function CropAnalysis() {
   const [drag, setDrag] = useState(false);
   const [engine, setEngine] = useState<Engine>("demo");
   const [soil, setSoil] = useState("unknown");
+  const [temperature, setTemperature] = useState("");
+  const [temperatureUnit, setTemperatureUnit] = useState<"C" | "F">("C");
+  const [humidity, setHumidity] = useState("");
   const [backend, setBackend] = useState<BackendStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +72,13 @@ export function CropAnalysis() {
 
   const run = async () => {
     if (!file) return;
+    const tempValue = temperature.trim() === "" ? null : Number(temperature);
+    const tempC = tempValue === null ? null : temperatureUnit === "F" ? (tempValue - 32) * 5 / 9 : tempValue;
+    const humidityValue = humidity.trim() === "" ? null : Number(humidity);
+    if (engine === "ai" && ((tempC !== null && (!Number.isFinite(tempC) || tempC < -40 || tempC > 85)) || (humidityValue !== null && (!Number.isFinite(humidityValue) || humidityValue < 0 || humidityValue > 100)))) {
+      setError(t("manual_invalid"));
+      return;
+    }
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -77,7 +87,7 @@ export function CropAnalysis() {
       let r: AnalysisResult | null = null;
       if (engine === "ai") {
         try {
-          r = await aiAnalysis(file, soil, i18n.language, latest, thresholds);
+          r = await aiAnalysis(file, soil, i18n.language, latest, thresholds, { temperatureC: tempC, humidityPct: humidityValue });
         } catch (e) {
           throw new Error(e instanceof Error ? e.message : "Backend analysis failed.");
         }
@@ -215,11 +225,15 @@ export function CropAnalysis() {
                 <button onClick={probe} className="font-medium text-primary hover:underline"><Localized id="ui_1f47d8366934f024" fallback="Recheck" /></button>
               </div>
               {engine === "ai" && (
-                <div className="space-y-2 text-sm">
-                  <label htmlFor="soil" className="font-medium">{t("soil")}</label>
-                  <select id="soil" value={soil} onChange={(e) => setSoil(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2">
-                    <option value="unknown">{t("unknown")}</option><option value="dry_at_5cm">{t("dry")}</option><option value="moist">{t("moist")}</option><option value="wet">{t("wet")}</option>
-                  </select>
+                <div className="space-y-4 text-sm">
+                  <p className="text-xs text-muted-foreground">{t("manual_intro")}</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div><label htmlFor="manual-temperature" className="font-medium">{t("manual_temperature")}</label>
+                      <div className="mt-1 flex gap-2"><input id="manual-temperature" type="number" inputMode="decimal" step="any" value={temperature} onChange={(e) => setTemperature(e.target.value)} placeholder={t("manual_optional")} className="min-w-0 w-full rounded-xl border border-border bg-background px-3 py-2" />
+                        <select aria-label={t("manual_unit")} value={temperatureUnit} onChange={(e) => { const next = e.target.value as "C" | "F"; if (temperature.trim() && Number.isFinite(Number(temperature))) { const value = Number(temperature); setTemperature(String(Math.round((next === "F" ? value * 9 / 5 + 32 : (value - 32) * 5 / 9) * 100) / 100)); } setTemperatureUnit(next); }} className="rounded-xl border border-border bg-background px-2 py-2"><option value="C">°C</option><option value="F">°F</option></select></div></div>
+                    <div><label htmlFor="manual-humidity" className="font-medium">{t("manual_humidity")}</label><input id="manual-humidity" type="number" inputMode="decimal" min="0" max="100" step="any" value={humidity} onChange={(e) => setHumidity(e.target.value)} placeholder={t("manual_optional")} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2" /></div>
+                  </div>
+                  <fieldset><legend className="mb-2 font-medium">{t("soil")}</legend><div className="grid gap-2 sm:grid-cols-2">{[{value:"unknown",label:t("unknown")},{value:"dry_at_5cm",label:t("dry")},{value:"moist",label:t("moist")},{value:"wet",label:t("wet")}].map(option => <label key={option.value} className={cn("flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2",soil === option.value ? "border-primary bg-primary/10" : "border-border")}><input type="radio" name="soil" value={option.value} checked={soil === option.value} onChange={() => setSoil(option.value)} className="accent-emerald-500" />{option.label}</label>)}</div></fieldset>
                   <p className="text-xs text-muted-foreground"><Localized id="ui_231453f9ee300d6f" fallback="Gemini is configured on the server. When enabled, photos are sent to Google. No key is needed in the browser." /></p>
                 </div>
               )}
