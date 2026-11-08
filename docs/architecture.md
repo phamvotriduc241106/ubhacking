@@ -20,7 +20,7 @@ Open-Meteo uses a labeled sample fallback on error. Rolling 24-hour precipitatio
 - Maturity and quality models from the Mendeley dataset, greenhouse analysis, and NASA MODIS are unavailable. No source has been substituted for them.
 - Gemini's generated report is not guaranteed factual. Read the structured evidence and deterministic cards; there is no validation that generated prose preserves every rule.
 - Model scores are uncalibrated and the model has not been validated on farm photos or for food safety. Field images may differ substantially from its training data.
-- Live Gemini, real hardware, and a full real-world end-to-end workflow have not been verified. Tests use mocked external services except for the opt-in local model test.
+- A live Gemini check with one public tomato photo verified image observation and report generation; the detector and weather were mocked for that check. Real hardware and a full real-world end-to-end workflow remain unverified. Automated tests mock external services except for the opt-in local model test.
 - The development setup uses HTTP and has no authentication. It is intended for a trusted local network, not public deployment.
 - HEIC decoding depends on installed image support; JPEG/PNG is recommended.
 

@@ -40,3 +40,44 @@ def test_provider_failures_are_sanitized(monkeypatch, error, status):
     fake_client(monkeypatch, error=error)
     assert asyncio.run(service.observe(b'image', 'image/jpeg')) == (None, status)
     assert asyncio.run(service.write_report({})) == (None, status)
+
+
+def test_vision_retries_transient_error_and_disables_sdk_retries(monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-key')
+    monkeypatch.setenv('GEMINI_VISION_MAX_ATTEMPTS', '2')
+    responses = [TimeoutError(), SimpleNamespace(text='{"tomato_visible":true}')]
+    call = AsyncMock(side_effect=responses)
+    options = []
+    def client(**kwargs):
+        options.append(kwargs['http_options'])
+        return SimpleNamespace(aio=SimpleNamespace(models=SimpleNamespace(generate_content=call)))
+    monkeypatch.setattr(service.genai, 'Client', client)
+    observation, status = asyncio.run(service.observe(b'image', 'image/jpeg'))
+    assert status == 'available' and observation.tomato_visible is True
+    assert call.await_count == 2
+    assert all(option.retry_options.attempts == 1 and option.timeout <= 40000 for option in options)
+
+
+def test_vision_never_retries_authentication_or_logs_secrets(monkeypatch, caplog):
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-secret')
+    error = type('AuthenticationError', (Exception,), {'code': 401})('test-secret private-image-data')
+    call = fake_client(monkeypatch, error=error)
+    assert asyncio.run(service.observe(b'private-image-data', 'image/jpeg')) == (None, 'authentication_failed')
+    assert call.await_count == 1
+    assert 'test-secret' not in caplog.text and 'private-image-data' not in caplog.text
+    assert 'response_status=401' in caplog.text
+
+
+def test_vision_total_timeout_is_bounded(monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-key')
+    monkeypatch.setenv('GEMINI_VISION_TIMEOUT_SECONDS', '1')
+    monkeypatch.setenv('GEMINI_VISION_TOTAL_TIMEOUT_SECONDS', '1')
+    monkeypatch.setenv('GEMINI_VISION_MAX_ATTEMPTS', '3')
+    async def slow(**kwargs):
+        await asyncio.sleep(10)
+    call = fake_client(monkeypatch)
+    call.side_effect = slow
+    start = service.time.monotonic()
+    assert asyncio.run(service.observe(b'image', 'image/jpeg')) == (None, 'timeout')
+    assert service.time.monotonic() - start < 2
+    assert call.await_count == 1
