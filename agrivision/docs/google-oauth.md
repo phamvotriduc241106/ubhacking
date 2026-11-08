@@ -1,0 +1,10 @@
+# Google sign-in configuration
+
+1. Create a Supabase project. Copy its Project URL and publishable key from the project API settings. In `agrivision/.env.local` set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Never use a secret or service-role key in these variables.
+2. In Google Cloud, configure the OAuth consent screen and add test users if the app is in testing. Create a Web application OAuth client. Add the Supabase callback URL shown in Supabase Authentication → Sign In / Providers → Google (normally `https://<project-ref>.supabase.co/auth/v1/callback`) as an authorized redirect URI. Copy the client ID and client secret.
+3. Enable Google in Supabase Authentication providers and enter the Google client ID and secret there. Keep the secret out of the repository and Vercel public environment variables.
+4. In Supabase Authentication URL Configuration, set the site URL and allow `http://localhost:3000/auth/callback` and your deployed `https://<your-domain>/auth/callback`. Add any additional local ports or Vercel preview URLs you actually use. Google redirects to Supabase; Supabase redirects to your allowlisted application callback.
+5. In Vercel set the project root to `agrivision`, add both public Supabase variables for the relevant environments, and redeploy. Configure the production domain in Supabase's redirect allowlist.
+6. Run `npm install && npm run dev` in `agrivision`, visit `/login`, and complete a real Google sign-in. Test refresh, `/account`, sign-out, denied consent and mobile view. OAuth cannot be verified without a configured project.
+
+Guest pages remain public. `/account` is checked server-side against Supabase Auth; no farm data or OAuth provider tokens are stored. Public Gemini-backed endpoints require separate server-side access controls and rate limiting before unrestricted production use. The local multilingual implementation is uncommitted and is not included in this branch; auth copy requires integration and translation when the branches are combined.

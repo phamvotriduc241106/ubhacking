@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { StatusPill } from "./status-pill";
 import { ThemeToggle } from "./theme-toggle";
+import { AuthControl } from "./auth-control";
 
 
 export function Navbar() {
@@ -76,6 +77,7 @@ export function Navbar() {
               )}
             </Link>
           </Button>
+          <AuthControl />
           <ThemeToggle />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
