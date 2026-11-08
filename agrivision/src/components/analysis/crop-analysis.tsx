@@ -21,6 +21,7 @@ export function CropAnalysis() {
   const { t } = useTranslation();
   const latest = useApp((s) => s.latest);
   const thresholds = useApp((s) => s.thresholds);
+  const location = useApp((s) => s.location);
   const setAnalysis = useApp((s) => s.setAnalysis);
   const last = useApp((s) => s.lastAnalysis);
 
@@ -77,7 +78,7 @@ export function CropAnalysis() {
       let r: AnalysisResult | null = null;
       if (engine === "ai") {
         try {
-          r = await aiAnalysis(file, soil, latest, thresholds);
+          r = await aiAnalysis(file, soil, latest, thresholds, location);
         } catch (e) {
           throw new Error(e instanceof Error ? e.message : "Backend analysis failed.");
         }

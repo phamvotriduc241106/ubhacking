@@ -228,10 +228,10 @@ class DecisionEngine:
             ))
 
         # Weather context
-        rain_info = "Rolling 24-hour rainfall is unavailable. Daily totals do not represent rolling 24-hour measurements."
+        rain_info = f"Modeled precipitation in the last 24 hours: {weather.rain_last_24h_mm} mm." if weather.rain_last_24h_mm is not None else "Rolling 24-hour precipitation is unavailable."
         evidence.append(EvidenceItem(
-            type="SIMULATED" if weather.is_fallback else "WEATHER_FORECAST",
-            label="Weather sample" if weather.is_fallback else "Open-Meteo Weather",
+            type="NOT_MEASURED" if weather.source == "unavailable" else "SIMULATED" if weather.is_fallback else "WEATHER_FORECAST",
+            label="Weather unavailable" if weather.source == "unavailable" else "Weather sample" if weather.is_fallback else "Open-Meteo modeled weather",
             detail=rain_info
         ))
 
@@ -279,6 +279,22 @@ class DecisionEngine:
                 "Neither ambient sensors nor weather forecasts replace a direct physical soil check."
             ]
             next_action = "Insert finger or trowel 5 to 10 cm into the soil near the plant base to check if moisture is present."
+
+        if weather.source == "open-meteo" and not weather.is_fallback:
+            guidance = []
+            if weather.temperature_c is not None and weather.temperature_c >= 30:
+                guidance.append("Hot modeled air conditions may increase water demand and heat stress; inspect plants and root-zone soil.")
+            elif weather.temperature_c is not None:
+                guidance.append("Monitor plants for heat stress as conditions change.")
+            if weather.relative_humidity_pct is not None and weather.relative_humidity_pct >= 85:
+                guidance.append("High modeled humidity can favor some diseases; inspect foliage and avoid unnecessary leaf wetting.")
+            elif weather.relative_humidity_pct is not None:
+                guidance.append("Sustained high humidity can favor some diseases; monitor foliage as conditions change.")
+            if weather.rain_last_24h_mm is not None:
+                guidance.append(f"The weather model reports {weather.rain_last_24h_mm} mm of recent precipitation; check the soil before irrigating.")
+            if guidance:
+                recom += " Weather context (inferred guidance): " + " ".join(guidance)
+            limitations.append("Open-Meteo weather and surface soil moisture are modeled estimates, not on-farm measurements; they do not determine watering or fertilizer needs.")
 
         return RecommendationCard(
             category="watering",

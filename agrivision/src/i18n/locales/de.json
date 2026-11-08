@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "KI-gestützte Pflanzenüberwachung für Tomatenbauern: ein digitaler 3D-Zwilling, IoT-Sensor-Dashboards, Fotoanalyse und Wetterinformationen.",
   "ui_c78ffe19571018fb": "Plattform",
   "ui_9b8197f3d9d1b528": "Über die Daten",
-  "ui_6779a62f2fca38e1": "Der Demomodus generiert simulierte Sensorwerte in Ihrem Browser. Das Wetter stammt von Open-Meteo, sofern verfügbar, ansonsten handelt es sich um eine beschriftete Simulation.",
+  "ui_6779a62f2fca38e1": "Der Demomodus erzeugt simulierte Sensorwerte. Wetterdaten stammen von Open-Meteo; nicht verfügbare Daten werden entsprechend gekennzeichnet.",
   "ui_fcd46e4b7c36180e": "Fotoergebnisse werden nur dann als KI gekennzeichnet, wenn ein verbundenes Modell das Bild analysiert hat. Bei diesem Prototyp handelt es sich um eine Entscheidungshilfe, nicht um eine validierte agronomische Diagnose.",
   "ui_6130d5a5c619111d": "FolLand · Intelligente Pflanzenüberwachung und 3D-Farm",
   "ui_0563ce14dc6d11c7": "FolLand-Beratung",

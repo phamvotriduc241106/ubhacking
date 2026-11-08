@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "Surveillance des cultures assistée par l'IA pour les producteurs de tomates : un jumeau numérique 3D, des tableaux de bord de capteurs IoT, une analyse de photos et une intelligence météorologique.",
   "ui_c78ffe19571018fb": "Plateforme",
   "ui_9b8197f3d9d1b528": "À propos des données",
-  "ui_6779a62f2fca38e1": "Le mode démo génère des lectures de capteurs simulées dans votre navigateur. La météo provient d'Open-Meteo lorsqu'elle est accessible, sinon une simulation étiquetée.",
+  "ui_6779a62f2fca38e1": "Le mode démo génère des mesures de capteurs simulées. Les données météo proviennent d’Open-Meteo ; leur indisponibilité est indiquée.",
   "ui_fcd46e4b7c36180e": "Les résultats photo sont étiquetés comme IA uniquement lorsqu'un modèle connecté a analysé l'image. Ce prototype est une aide à la décision, pas un diagnostic agronomique validé.",
   "ui_6130d5a5c619111d": "FolLand · Surveillance intelligente des cultures et ferme 3D",
   "ui_0563ce14dc6d11c7": "Conseil FolLand",

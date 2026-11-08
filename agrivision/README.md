@@ -67,7 +67,7 @@ The Next.js app proxies `/api/folland/*` to `http://127.0.0.1:8000/api/*` (overr
 
 - **Demo Mode** simulates readings in the browser (diurnal model plus the selected weather). They are labeled "Demo data".
 - **Integration Mode** polls any JSON endpoint (see the payload on the dashboard). Readings are labeled live only if the payload says `"live": true` or `"data_mode": "live"`. Nothing is filled in with simulated values when the endpoint is down.
-- **Weather** comes from Open-Meteo when reachable, otherwise from a labeled simulation.
+- **Weather** comes from Open-Meteo's modeled data. Missing or unreachable data is shown as unavailable; surface soil estimates are not field measurements.
 - **Photo results** are labeled AI only when a connected model analyzed the image. Plant-level conditions in the digital twin are modeled from zone readings and a demo scouting log.
 
 ## Structure

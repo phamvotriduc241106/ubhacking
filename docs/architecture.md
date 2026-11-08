@@ -13,7 +13,7 @@ Model weights are loaded lazily once per process. See [model validation](model-v
 
 Sensors default to simulated readings. `FOLLAND_SERIAL_PORT` enables a 115200-baud METRO JSON reader; data older than 10 seconds becomes unavailable. Manual air readings are labeled user-reported and have no distance or canopy height. This serial path has not been tested on physical hardware. The starter firmware is in the [original proposal](mvp-proposal.md).
 
-Open-Meteo uses a labeled sample fallback on error. Rolling 24-hour precipitation is unavailable rather than inferred from daily totals. The dashboard's selected coordinates are included in analysis requests.
+Open-Meteo weather defaults to Petrolina, Brazil, and unavailable data remains unavailable on error. Rolling 24-hour precipitation is calculated only when 24 complete hourly values are present; it is modeled rather than an on-farm rain gauge. The selected coordinates are included in analysis requests. Surface soil moisture is an estimate and does not replace a root-zone measurement.
 
 ## Known limitations
 

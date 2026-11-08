@@ -1,6 +1,7 @@
 import type { AnalysisResult, CropCondition, EnvironmentRating, Ripeness, SensorReading, Thresholds } from "./types";
 import { round } from "./utils";
 import { dataOrigin } from "./data-origin";
+import type { Location } from "./weather";
 
 type ColorStats = NonNullable<AnalysisResult["colorStats"]>;
 
@@ -140,11 +141,14 @@ export async function aiAnalysis(
   soilCondition: string,
   reading: SensorReading | null,
   t: Thresholds,
+  location: Location,
 ): Promise<AnalysisResult> {
   const fd = new FormData();
   fd.append("image", file);
   fd.append("crop", "tomato");
   fd.append("soil_condition", soilCondition);
+  fd.append("latitude", String(location.latitude));
+  fd.append("longitude", String(location.longitude));
   const res = await fetch("/api/folland/analyze", { method: "POST", body: fd });
   if (!res.ok) {
     let detail = `Backend returned ${res.status}`;

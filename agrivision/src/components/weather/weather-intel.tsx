@@ -19,7 +19,7 @@ import { WeatherCharts } from "./lazy-weather-charts";
 const shortDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString([], { month: "short", day: "numeric" });
 
 export function WeatherIntel() {
-  const { data, loading, error, reload } = useWeather();
+  const { data, loading, error, lastSuccess, reload } = useWeather();
   const location = useApp((s) => s.location);
   const setLocation = useApp((s) => s.setLocation);
   const thresholds = useApp((s) => s.thresholds);
@@ -48,7 +48,6 @@ export function WeatherIntel() {
   }, [data]);
   const forecast = daily.filter((d) => d.date >= today).slice(0, 7);
   const past = daily.filter((d) => !d.isForecast);
-  const rain14 = past.reduce((s, d) => s + d.precipitation, 0);
   const avgHigh = past.length ? past.reduce((s, d) => s + d.tMax, 0) / past.length : 0;
   const humidDays = past.filter((d) => d.humidity > 80).length;
   const now = data ? describeCode(data.current.code) : null;
@@ -93,12 +92,13 @@ export function WeatherIntel() {
       </PageHeader>
 
       <div className="container mt-10 space-y-4">
-        {(error || data?.source === "simulated") && (
+        {loading && <p role="status" className="text-sm text-muted-foreground">Refreshing Open-Meteo weather…</p>}
+        {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-gold-500/40 bg-gold-400/10 px-4 py-3 text-sm">
-            <Badge variant="demo">Simulated weather</Badge>
-            <span>Open-Meteo could not be reached{error ? ` (${error})` : ""}. Showing labeled simulated weather instead.</span>
+            <span role="alert">Weather unavailable. Please try Refresh. No weather estimates are displayed.{lastSuccess != null && ` Last successful refresh (your time): ${new Date(lastSuccess).toLocaleString()}.`}</span>
           </div>
         )}
+        {!loading && !error && data && <p role="status" className="text-sm text-muted-foreground">Weather data: Open-Meteo · Model time: {data.current.time ?? "Unavailable"} {data.timezone} · Last successful refresh (your time): {new Date(data.fetchedAt).toLocaleString()}</p>}
         {geoMsg && <p className="text-sm text-muted-foreground">{geoMsg}</p>}
 
         <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
@@ -108,16 +108,16 @@ export function WeatherIntel() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-white/70">{data?.locationName ?? location.name} · now</p>
-                  <p className="mt-2 font-display text-7xl font-semibold tracking-tight">{data ? Math.round(data.current.temp) : "—"}°</p>
-                  <p className="mt-1 text-lg text-white/85">{now?.label ?? "Loading…"}</p>
+                  <p className="mt-2 font-display text-7xl font-semibold tracking-tight">{data?.current.temp != null ? data.current.temp : "—"}°C</p>
+                  <p className="mt-1 text-lg text-white/85">{now?.label ?? (loading ? "Loading…" : "Unavailable")}</p>
                 </div>
                 <WeatherIcon kind={now?.kind ?? "partly"} className="h-20 w-20" />
               </div>
               <div className="grid grid-cols-3 gap-2 text-sm">
                 {[
-                  { icon: Droplets, l: "Humidity", v: data ? `${data.current.humidity}%` : "—" },
-                  { icon: Wind, l: "Wind", v: data ? `${Math.round(data.current.wind)} km/h` : "—" },
-                  { icon: CloudRain, l: "Rain 14 d", v: data ? `${rain14.toFixed(0)} mm` : "—" },
+                  { icon: Droplets, l: "Humidity", v: data?.current.humidity != null ? `${data.current.humidity}%` : "Unavailable" },
+                  { icon: Wind, l: "Wind", v: data?.current.wind != null ? `${data.current.wind} km/h` : "Unavailable" },
+                  { icon: CloudRain, l: "Precipitation", v: data?.current.precipitation != null ? `${data.current.precipitation} mm` : "Unavailable" },
                 ].map((m) => (
                   <div key={m.l} className="rounded-2xl bg-white/10 p-3 backdrop-blur-md">
                     <m.icon className="h-4 w-4 text-white/70" />
@@ -127,19 +127,29 @@ export function WeatherIntel() {
                 ))}
               </div>
               <Badge variant={data?.source === "open-meteo" ? "live" : "demo"} className="self-start border-white/20 bg-white/15 text-white">
-                {data?.source === "open-meteo" ? "● Open-Meteo data" : "◌ Simulated"}
+                {data ? "Weather data: Open-Meteo · modeled" : "Weather unavailable"}
               </Badge>
             </div>
           </Reveal>
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent weather</CardTitle>
-              <CardDescription>Historical conditions for the selected location.</CardDescription>
+              <CardTitle>Soil and farming context</CardTitle>
+              <CardDescription>Open-Meteo modeled estimates, not field sensor measurements.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3 text-center">
-              <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="num font-display text-2xl font-semibold">{data ? `${avgHigh.toFixed(1)}°` : "—"}</p><p className="text-xs text-muted-foreground">Average high · 14 days</p></div>
-              <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="num font-display text-2xl font-semibold">{data ? humidDays : "—"}</p><p className="text-xs text-muted-foreground">Days above 80% humidity</p></div>
+            <CardContent className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="font-semibold">{data?.soil.temperature != null ? `${data.soil.temperature} °C` : "Unavailable"}</p><p className="text-xs text-muted-foreground">Soil temperature · surface</p></div>
+                <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="font-semibold">{data?.soil.moisture != null ? `${data.soil.moisture} m³/m³` : "Unavailable"}</p><p className="text-xs text-muted-foreground">Estimated soil moisture · 0–1 cm</p></div>
+              </div>
+              <p className="text-xs text-muted-foreground">Soil model time: {data?.soil.time ?? "Unavailable"} {data?.timezone ?? ""} · Surface estimates do not measure root-zone soil.</p>
+              <div className="rounded-xl bg-foreground/[0.04] p-4 space-y-2"><p className="font-semibold">Agricultural guidance · inferred</p>
+                <p>Check root-zone soil directly before deciding whether to irrigate; modeled surface moisture alone cannot determine watering or fertilizer needs.</p>
+                {data?.current.temp != null && data.current.temp >= 30 && <p>Hot modeled conditions may increase heat stress and water demand; inspect plants and soil.</p>}
+                {data?.current.temp != null && data.current.temp < 30 && <p>Monitor plants for heat stress as conditions change.</p>}
+                {data?.current.humidity != null && <p>{data.current.humidity >= 85 ? "High modeled humidity can favor some diseases; inspect foliage and avoid unnecessary leaf wetting." : "Sustained high humidity can favor some diseases; monitor foliage as conditions change."}</p>}
+                <p>{data?.rain24 != null ? `Modeled precipitation over the last 24 hours: ${data.rain24.toFixed(1)} mm. Check the soil before irrigating.` : "Recent 24-hour precipitation is unavailable."}</p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -165,7 +175,7 @@ export function WeatherIntel() {
                   </motion.div>
                 );
               })}
-              {!forecast.length && Array.from({ length: 7 }).map((_, i) => <div key={i} className="h-36 animate-pulse rounded-2xl bg-foreground/5" />)}
+              {!forecast.length && <p className="text-sm text-muted-foreground">{loading ? "Loading forecast…" : "Forecast unavailable."}</p>}
             </div>
           </CardContent>
         </Card>

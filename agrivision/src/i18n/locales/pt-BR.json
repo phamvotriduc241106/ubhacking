@@ -119,7 +119,7 @@
   "ui_cb18c1e4f94a0bea": "Monitoramento de colheitas assistido por IA para produtores de tomate: um gêmeo digital 3D, painéis de sensores IoT, análise de fotos e inteligência meteorológica.",
   "ui_c78ffe19571018fb": "Plataforma",
   "ui_9b8197f3d9d1b528": "Sobre os dados",
-  "ui_6779a62f2fca38e1": "O Modo Demo gera leituras simuladas de sensores em seu navegador. O clima vem do Open-Meteo quando acessível, caso contrário, uma simulação rotulada.",
+  "ui_6779a62f2fca38e1": "O modo de demonstração gera leituras simuladas dos sensores. Os dados meteorológicos vêm do Open-Meteo; quando indisponíveis, isso é informado.",
   "ui_fcd46e4b7c36180e": "Os resultados das fotos são rotulados como IA somente quando um modelo conectado analisa a imagem. Este protótipo é um apoio à decisão e não um diagnóstico agronómico validado.",
   "ui_6130d5a5c619111d": "FolLand · Monitoramento Inteligente de Culturas e Fazenda 3D",
   "ui_0563ce14dc6d11c7": "FolLand Advisory",

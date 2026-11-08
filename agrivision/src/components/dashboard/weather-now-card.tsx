@@ -4,15 +4,12 @@ import { Localized, LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { CloudSun, Wind } from "lucide-react";
 import Link from "next/link";
-import { conditionKind, WeatherIcon } from "@/components/shared/weather-icon";
+import { WeatherIcon } from "@/components/shared/weather-icon";
 import { useWeather } from "@/hooks/use-weather";
-import { WEATHER_PROFILES } from "@/lib/simulation";
-import { useApp } from "@/lib/store";
 import { describeCode } from "@/lib/weather";
 
 export function WeatherNowCard({ index = 0 }: { index?: number }) {
   const { data, loading } = useWeather();
-  const condition = useApp((s) => s.condition);
   const d = data ? describeCode(data.current.code) : null;
   return (
     <motion.div
@@ -43,7 +40,7 @@ export function WeatherNowCard({ index = 0 }: { index?: number }) {
             <div className="h-9 w-24 animate-pulse rounded-lg bg-foreground/10" />
           ) : (
             <p className="font-display text-4xl font-semibold">
-              {data ? data.current.temp.toFixed(0) : "—"}
+              {data?.current.temp != null ? data.current.temp.toFixed(0) : "—"}
               <span className="text-base font-normal text-muted-foreground">°C</span>
             </p>
           )}
@@ -51,12 +48,10 @@ export function WeatherNowCard({ index = 0 }: { index?: number }) {
         </div>
       </div>
       <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <WeatherIcon kind={conditionKind(condition)} className="h-5 w-5" />{" "}<Localized id="ui_600274f5df7e089a" fallback="On-site sim:" />{" "}<LocalizedText text={WEATHER_PROFILES[condition].label} />
-        </span>
+        <span>Weather data: Open-Meteo</span>
         {data && (
           <span className="flex items-center gap-1">
-            <Wind className="h-3 w-3" /> {data.current.wind.toFixed(0)} km/h
+            <Wind className="h-3 w-3" /> {data.current.wind != null ? `${data.current.wind.toFixed(0)} km/h` : "Wind unavailable"}
           </span>
         )}
       </div>
