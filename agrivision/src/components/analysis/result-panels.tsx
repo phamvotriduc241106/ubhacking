@@ -2,11 +2,12 @@
 
 import { motion } from "framer-motion";
 import { Bot, CheckCircle2, ChevronRight, Droplets, FlaskConical, Leaf, Sun, Thermometer } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { OriginBadge } from "@/components/shared/origin-badge";
 import { ReportTemplate } from "./report-template";
 import type { AnalysisResult, CropCondition, EnvironmentRating, Ripeness, SensorReading } from "@/lib/types";
 import { cn, formatLux } from "@/lib/utils";
+import { printReport } from "@/lib/print-report";
 
 const CONDITIONS: { id: CropCondition; label: string; color: string }[] = [
   { id: "healthy", label: "Healthy", color: "#22c55e" },
@@ -60,6 +61,7 @@ function Scale<T extends string>({ options, value, delay }: { options: { id: T; 
 }
 
 export function ResultPanels({ result, reading, notice, preview }: { result: AnalysisResult; reading: SensorReading | null; notice?: string | null; preview?: string | null }) {
+  const reportRef = useRef<HTMLDivElement>(null);
   const isBackend = result.source === "backend";
   const isAI = result.source === "ai" || isBackend;
   const ripe = result.ripeness === "unknown" || result.ripeness === "not_applicable" ? null : result.ripeness;
@@ -94,7 +96,7 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
       </Panel>}
       {isBackend && result.report && <Panel title="Farmer report" icon={<Bot className="h-3.5 w-3.5" />} delay={0.04}>
         <p className="text-xs font-semibold text-muted-foreground">{result.report.source === "gemini" ? `AI-generated report · ${result.report.model ?? "Gemini model unavailable"} — review against the evidence` : `Rule-based fallback · Gemini ${result.report.gemini_status.replace(/_/g," ")}`}</p>
-        {result.report.sections && <><div className="my-4"><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => window.print()}>Print / Save as PDF</button></>}
+        {result.report.sections && <><div className="my-4" ref={reportRef}><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => printReport(reportRef.current?.querySelector(".folland-report") ?? null)}>Print / Save as PDF</button></>}
         <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">View raw report</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p></details>
         <button type="button" className="mt-4 text-sm font-semibold text-primary hover:underline" onClick={() => { const u=URL.createObjectURL(new Blob([result.report!.text],{type:"text/plain"})); const a=document.createElement("a"); a.href=u; a.download="folland-report.txt"; a.click(); URL.revokeObjectURL(u); }}>Download report</button>
       </Panel>}
