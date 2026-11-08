@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import { usePlants } from "@/hooks/use-plants";
 import { useApp } from "@/lib/store";
 import { formatLux } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const FarmCanvas = dynamic(() => import("@/components/three/farm-canvas"), { ssr: false, loading: () => <SceneLoader /> });
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Hero() {
+  const { t } = useTranslation();
   const latest = useApp((s) => s.latest);
   const mode = useApp((s) => s.mode);
   const plants = usePlants();
@@ -36,7 +38,7 @@ export function Hero() {
         <div className="container">
           <div className="max-w-[640px]">
             <motion.span initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2, ease }} className="eyebrow pointer-events-auto backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> AI-powered crop intelligence
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> {t("hero_badge")}
             </motion.span>
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
@@ -44,25 +46,25 @@ export function Hero() {
               transition={{ duration: 0.9, delay: 0.35, ease }}
               className="mt-5 text-balance text-[2.35rem] font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl"
             >
-              The Future of Farming Is <span className="text-gradient">Intelligent.</span>
+              {t("hero_title")} <span className="text-gradient">{t("hero_subtitle")}</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.5, ease }} className="mt-5 max-w-xl text-pretty text-base text-foreground/75 sm:text-lg">
-              Monitor crop health, analyze environmental conditions, and make smarter farming decisions with AI-powered intelligence.
+              {t("hero_description")}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.65, ease }} className="pointer-events-auto mt-8 flex flex-wrap gap-3">
               <Button size="lg" asChild>
                 <Link href="/farm">
-                  Explore Smart Farm <ArrowRight />
+                  {t("hero_explore")} <ArrowRight />
                 </Link>
               </Button>
               <Button size="lg" variant="glass" asChild>
                 <Link href="/dashboard">
-                  <LayoutDashboard /> Launch Live Dashboard
+                  <LayoutDashboard /> {t("hero_dashboard")}
                 </Link>
               </Button>
               <Button size="lg" variant="glass" asChild>
                 <Link href="/analysis">
-                  <ScanSearch /> Crop AI
+                  <ScanSearch /> {t("analysis")}
                 </Link>
               </Button>
             </motion.div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { Cloud, CloudRain, Sun } from "lucide-react";
 import { useApp } from "@/lib/store";
@@ -34,7 +35,7 @@ export function WeatherSwitcher({ className, compact }: { className?: string; co
           >
             {active && <motion.span layoutId="weather-pill" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
             <o.icon className="relative h-3.5 w-3.5" />
-            {!compact && <span className="relative">{o.label}</span>}
+            {!compact && <span className="relative"><LocalizedText text={o.label} /></span>}
           </button>
         );
       })}

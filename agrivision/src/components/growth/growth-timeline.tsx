@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bug, Droplets, FlaskConical, Pause, Play, Sun, Thermometer, Wind } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -54,7 +55,7 @@ export function GrowthTimeline() {
     <div>
       <PageHeader
         eyebrow="3D growth visualization"
-        title={<>From seed to <span className="text-gradient">harvest.</span></>}
+        title={<><Localized id="ui_5e4562b50b0543ea" fallback="From seed to" />{" "}<span className="text-gradient"><Localized id="ui_d42fdd6b64213788" fallback="harvest." /></span></>}
         description="Drag the timeline to grow a procedurally generated tomato plant and learn what it needs at each stage."
       />
       <div className="container mt-10 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
@@ -63,34 +64,33 @@ export function GrowthTimeline() {
           <div className="pointer-events-none absolute left-4 top-4">
             <AnimatePresence mode="wait">
               <motion.div key={stage.key} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="glass rounded-2xl px-4 py-2.5">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Stage {idx + 1} / 6</p>
-                <p className="font-display text-xl font-semibold">{stage.name}</p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground"><Localized id="ui_de838855e4a6e04e" fallback="Stage" />{" "}{idx + 1} / 6</p>
+                <p className="font-display text-xl font-semibold"><LocalizedText text={stage.name} /></p>
               </motion.div>
             </AnimatePresence>
           </div>
-          <p className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-muted-foreground">Drag to rotate · scroll to zoom</p>
+          <p className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-muted-foreground"><Localized id="ui_689953014bff9589" fallback="Drag to rotate · scroll to zoom" /></p>
         </div>
 
         <div className="glass flex flex-col rounded-3xl p-6">
           <AnimatePresence mode="wait">
             <motion.div key={stage.key} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.35 }} className="flex flex-1 flex-col">
-              <p className="text-sm font-medium text-primary">{stage.days}</p>
-              <h3 className="mt-1 text-3xl font-semibold">{stage.name}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{stage.summary}</p>
+              <p className="text-sm font-medium text-primary"><LocalizedText text={stage.days} /></p>
+              <h3 className="mt-1 text-3xl font-semibold"><LocalizedText text={stage.name} /></h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground"><LocalizedText text={stage.summary} /></p>
               <dl className="mt-5 grid gap-2.5 sm:grid-cols-2">
                 {reqs.map((r) => (
                   <div key={r.label} className="rounded-2xl bg-foreground/[0.04] p-3">
-                    <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"><r.icon className="h-3.5 w-3.5" /> {r.label}</dt>
-                    <dd className="mt-1 text-sm">{r.v}</dd>
+                    <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"><r.icon className="h-3.5 w-3.5" /> <LocalizedText text={r.label} /></dt>
+                    <dd className="mt-1 text-sm"><LocalizedText text={r.v} /></dd>
                   </div>
                 ))}
               </dl>
               {latest && (
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Field right now: {latest.temperatureC.toFixed(1)} °C, {latest.humidityPct.toFixed(0)}% RH ({latest.origin === "live" ? "live" : "simulated"}).
+                <p className="mt-4 text-xs text-muted-foreground"><Localized id="ui_a5ed38f83ca9c447" fallback="Field right now:" />{" "}{latest.temperatureC.toFixed(1)} °C, {latest.humidityPct.toFixed(0)}<Localized id="ui_50c3a5aff1e271dd" fallback="% RH (" />{latest.origin === "live" ? "live" : "simulated"}).
                 </p>
               )}
-              <p className="mt-auto pt-4 text-[11px] text-muted-foreground">Typical ranges for tomatoes; they vary by variety, climate and growing system.</p>
+              <p className="mt-auto pt-4 text-[11px] text-muted-foreground"><Localized id="ui_af27d2a64bd5566c" fallback="Typical ranges for tomatoes; they vary by variety, climate and growing system." /></p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -121,8 +121,8 @@ export function GrowthTimeline() {
                 onClick={() => { setPlaying(false); setG(ANCHORS[i]); }}
                 className={cn("relative rounded-2xl px-3 py-2.5 text-left transition-all", i === idx ? "bg-primary/15 ring-1 ring-primary/40" : "hover:bg-foreground/5")}
               >
-                <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.days}</span>
-                <span className={cn("block text-sm font-semibold", i === idx ? "text-primary" : "")}>{s.name}</span>
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><LocalizedText text={s.days} /></span>
+                <span className={cn("block text-sm font-semibold", i === idx ? "text-primary" : "")}><LocalizedText text={s.name} /></span>
                 {i < GROWTH_STAGES.length - 1 && <span className="absolute -right-1.5 top-1/2 hidden -translate-y-1/2 text-muted-foreground sm:block">→</span>}
               </button>
             ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { CloudSun, Wind } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +28,7 @@ export function WeatherNowCard({ index = 0 }: { index?: number }) {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/15 text-sky-500">
             <CloudSun className="h-[18px] w-[18px]" />
           </span>
-          <span className="text-sm font-medium text-muted-foreground">Weather Conditions</span>
+          <span className="text-sm font-medium text-muted-foreground"><Localized id="ui_d4ebb9ed2614a4b9" fallback="Weather Conditions" /></span>
         </div>
         {data && (
           <span className={data.source === "open-meteo" ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300" : "rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-semibold text-gold-500"}>
@@ -51,7 +52,7 @@ export function WeatherNowCard({ index = 0 }: { index?: number }) {
       </div>
       <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <WeatherIcon kind={conditionKind(condition)} className="h-5 w-5" /> On-site sim: {WEATHER_PROFILES[condition].label}
+          <WeatherIcon kind={conditionKind(condition)} className="h-5 w-5" />{" "}<Localized id="ui_600274f5df7e089a" fallback="On-site sim:" />{" "}<LocalizedText text={WEATHER_PROFILES[condition].label} />
         </span>
         {data && (
           <span className="flex items-center gap-1">
@@ -59,7 +60,7 @@ export function WeatherNowCard({ index = 0 }: { index?: number }) {
           </span>
         )}
       </div>
-      <Link href="/weather" className="mt-2 text-[11px] font-medium text-primary hover:underline">Weather intelligence →</Link>
+      <Link href="/weather" className="mt-2 text-[11px] font-medium text-primary hover:underline"><Localized id="ui_eaf809f31ee96e98" fallback="Weather intelligence →" /></Link>
     </motion.div>
   );
 }

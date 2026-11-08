@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { useMemo, useState } from "react";
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,7 +46,7 @@ export function SensorChart({ history, height = 320 }: { history: SensorReading[
               )}
             >
               <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-              {s.label}
+              <LocalizedText text={s.label} />
             </button>
           ))}
         </div>
@@ -59,9 +60,7 @@ export function SensorChart({ history, height = 320 }: { history: SensorReading[
       </div>
       <div style={{ height }} className="-ml-2">
         {data.length < 2 ? (
-          <div className="grid h-full place-items-center rounded-2xl border border-dashed text-sm text-muted-foreground">
-            Collecting readings… the chart fills in as data arrives.
-          </div>
+          <div className="grid h-full place-items-center rounded-2xl border border-dashed text-sm text-muted-foreground"><Localized id="ui_dabf0cbe06e6c7df" fallback="Collecting readings… the chart fills in as data arrives." /></div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>

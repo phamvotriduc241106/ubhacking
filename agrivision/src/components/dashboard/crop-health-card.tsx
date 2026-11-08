@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { Leaf } from "lucide-react";
 import Link from "next/link";
@@ -37,9 +38,9 @@ export function CropHealthCard({ index = 0 }: { index?: number }) {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-500">
             <Leaf className="h-[18px] w-[18px]" />
           </span>
-          <span className="text-sm font-medium text-muted-foreground">Crop Health</span>
+          <span className="text-sm font-medium text-muted-foreground"><Localized id="ui_23f38dce897b362c" fallback="Crop Health" /></span>
         </div>
-        <span className="rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-semibold text-gold-500 dark:text-gold-300">Demo model</span>
+        <span className="rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-semibold text-gold-500 dark:text-gold-300"><Localized id="ui_151d847b64f68694" fallback="Demo model" /></span>
       </div>
       <div className="mt-3 flex items-center gap-5">
         <div className="relative h-24 w-24 shrink-0">
@@ -72,16 +73,14 @@ export function CropHealthCard({ index = 0 }: { index?: number }) {
             <li key={k} className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full" style={{ background: HEALTH_META[k].color }} />
-                {HEALTH_META[k].label}
+                <LocalizedText text={HEALTH_META[k].label} />
               </span>
               <span className="num font-semibold">{counts[k]}</span>
             </li>
           ))}
         </ul>
       </div>
-      <Link href="/farm" className="mt-auto pt-3 text-[11px] font-medium text-primary hover:underline">
-        Inspect plants in the digital twin →
-      </Link>
+      <Link href="/farm" className="mt-auto pt-3 text-[11px] font-medium text-primary hover:underline"><Localized id="ui_2a850c153284cc7b" fallback="Inspect plants in the digital twin →" /></Link>
     </motion.div>
   );
 }
