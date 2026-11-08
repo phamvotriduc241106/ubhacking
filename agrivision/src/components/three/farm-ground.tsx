@@ -19,7 +19,7 @@ export function bedCenters() {
   return out;
 }
 
-function useInstances(ref: React.RefObject<THREE.InstancedMesh>, mats: THREE.Matrix4[], deps: unknown[]) {
+function useInstances(ref: React.RefObject<THREE.InstancedMesh | null>, mats: THREE.Matrix4[], deps: unknown[]) {
   useLayoutEffect(() => {
     const m = ref.current;
     if (!m) return;
