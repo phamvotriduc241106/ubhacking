@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, Box, CloudSun, Gauge, ScanSearch, Sprout } from "lucide-react";
+import { Box, CloudSun, Gauge, ScanSearch, Sprout } from "lucide-react";
 import Link from "next/link";
 import { SectionHeading } from "@/components/shared/section-heading";
 
@@ -9,9 +9,8 @@ const FEATURES = [
   { href: "/farm", icon: Box, title: "3D Digital Twin", text: "Explore every bed, plant and sensor node. Color-coded health, farm zones and live weather in an interactive 3D farm.", accent: "#34d399" },
   { href: "/dashboard", icon: Gauge, title: "IoT Sensor Dashboard", text: "Temperature, humidity, light and canopy growth with 24-hour trends, plus a pluggable integration mode for real hardware.", accent: "#38bdf8" },
   { href: "/analysis", icon: ScanSearch, title: "AI Crop Analysis", text: "Upload a photo of a plant or fruit. Get visible symptoms, ripeness and suggestions, clearly labeled AI or demo.", accent: "#e6cc85" },
-  { href: "/weather", icon: CloudSun, title: "Weather Intelligence", text: "Two weeks of history and a 7-day forecast for your field, with alerts for heat, cold and heavy rain.", accent: "#93c5fd" },
+  { href: "/weather", icon: CloudSun, title: "Weather Intelligence", text: "Two weeks of history and a 7-day forecast for your field, including temperature and rainfall.", accent: "#93c5fd" },
   { href: "/growth", icon: Sprout, title: "Growth Timeline", text: "Scrub a procedurally grown tomato from seedling to harvest and learn what each stage needs.", accent: "#86efac" },
-  { href: "/alerts", icon: Bell, title: "Smart Recommendations", text: "Camera, sensor and weather evidence fused into actionable alerts with thresholds you control.", accent: "#fca5a5" },
 ];
 
 export function Features() {

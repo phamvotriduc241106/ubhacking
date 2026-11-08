@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ScanSearch } from "lucide-react";
+import { ScanSearch } from "lucide-react";
 import Link from "next/link";
 import { Reveal } from "@/components/shared/reveal";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,6 @@ export function Cta() {
             <Button size="lg" variant="gold" asChild>
               <Link href="/analysis">
                 <ScanSearch /> Analyze a photo
-              </Link>
-            </Button>
-            <Button size="lg" variant="ghost" className="text-cream-100 hover:bg-white/10" asChild>
-              <Link href="/alerts">
-                View recommendations <ArrowRight />
               </Link>
             </Button>
           </div>

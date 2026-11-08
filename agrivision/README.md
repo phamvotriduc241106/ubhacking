@@ -2,7 +2,7 @@
 
 The initial 3D interface was adapted from [munibraza/ubhackingai26](https://github.com/munibraza/ubhackingai26), including local UI updates, and connected to FolLand’s backend.
 
-A futuristic 3D smart-agriculture web application for FolLand: an interactive tomato-farm digital twin, IoT sensor dashboard, photo-based crop analysis, weather intelligence, a 3D growth timeline and configurable smart alerts.
+A futuristic 3D smart-agriculture web application for FolLand: an interactive tomato-farm digital twin, IoT sensor dashboard, photo-based crop analysis, weather intelligence and a 3D growth timeline.
 
 Built with Next.js 15 (App Router), React 19, TypeScript, Three.js + React Three Fiber + drei, Tailwind CSS, shadcn/ui-style components (Radix), Framer Motion, Recharts and Lucide.
 
@@ -60,9 +60,8 @@ The Next.js app proxies `/api/folland/*` to `http://127.0.0.1:8000/api/*` (overr
 | `/farm` | Digital twin: click plants and sensors, select zones, health overlay, sunny/cloudy/rainy |
 | `/dashboard` | Sensor cards with trends, interactive chart, Demo / Integration data source |
 | `/analysis` | Photo upload and preview, AI or demo analysis, condition/ripeness/environment panels |
-| `/weather` | Open-Meteo history and forecast, rainfall, humidity, growing degree days, alerts |
+| `/weather` | Open-Meteo history and forecast, rainfall, humidity and growing degree days |
 | `/growth` | Procedural 3D tomato from seedling to harvest with a timeline slider |
-| `/alerts` | Recommendations fused from sensors, weather and camera, with editable thresholds |
 
 ## Data honesty
 
@@ -79,9 +78,9 @@ src/
   components/
     three/        3D: procedural plant geometry, instanced plant field, environment, farm, growth scene
     ui/           shadcn/ui-style primitives (button, card, slider, switch, tabs, sheet, tooltip…)
-    layout/ sections/ dashboard/ farm/ analysis/ weather/ growth/ alerts/ charts/ shared/
-  hooks/          quality tier, weather loading, alerts, plant states, animated numbers
-  lib/            types, simulation, farm layout, recommendation rules, weather, analysis, store
+    layout/ sections/ dashboard/ farm/ analysis/ weather/ growth/ charts/ shared/
+  hooks/          quality tier, weather loading, plant states, animated numbers
+  lib/            types, simulation, farm layout, weather, analysis, store
 ```
 
 ## Performance

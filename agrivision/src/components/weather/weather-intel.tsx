@@ -1,16 +1,14 @@
 "use client";
 
-import { AlertTriangle, CloudRain, Droplets, LocateFixed, MapPin, RefreshCw, Wind } from "lucide-react";
+import { CloudRain, Droplets, LocateFixed, MapPin, RefreshCw, Wind } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
-import { EvidenceBadge } from "@/components/shared/origin-badge";
 import { PageHeader } from "@/components/shared/section-heading";
 import { Reveal } from "@/components/shared/reveal";
 import { WeatherIcon } from "@/components/shared/weather-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAlerts } from "@/hooks/use-alerts";
 import { useWeather } from "@/hooks/use-weather";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -25,7 +23,6 @@ export function WeatherIntel() {
   const location = useApp((s) => s.location);
   const setLocation = useApp((s) => s.setLocation);
   const thresholds = useApp((s) => s.thresholds);
-  const alerts = useAlerts().filter((a) => a.category === "weather" || a.category === "temperature");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
   const today = data ? locationNow(data).date : new Date().toISOString().slice(0, 10);
@@ -137,30 +134,12 @@ export function WeatherIntel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-gold-500" /> Growing-condition alerts</CardTitle>
-              <CardDescription>Based on forecast, history and your thresholds.</CardDescription>
+              <CardTitle>Recent weather</CardTitle>
+              <CardDescription>Historical conditions for the selected location.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {alerts.length === 0 && <p className="rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300">No unfavorable growing conditions detected for the next few days.</p>}
-              {alerts.map((a) => (
-                <div key={a.id} className={cn("rounded-2xl border p-3.5", a.severity === "critical" ? "border-red-500/40 bg-red-500/10" : a.severity === "warning" ? "border-yellow-500/40 bg-yellow-500/10" : "border-border bg-foreground/[0.03]")}>
-                  <p className="text-sm font-semibold">{a.title}</p>
-                  <p className="mt-0.5 text-sm text-foreground/75">{a.message}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">{a.evidence.map((e) => <EvidenceBadge key={e.detail} kind={e.kind} />)}</div>
-                </div>
-              ))}
-              <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-                {[
-                  { l: "Avg high (14 d)", v: `${avgHigh.toFixed(1)}°` },
-                  { l: "Humid days > 80%", v: `${humidDays}` },
-                  { l: "Heat limit", v: `${thresholds.tempHighC}°` },
-                ].map((s) => (
-                  <div key={s.l} className="rounded-xl bg-foreground/[0.04] p-2.5">
-                    <p className="num font-display text-xl font-semibold">{s.v}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.l}</p>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="num font-display text-2xl font-semibold">{data ? `${avgHigh.toFixed(1)}°` : "—"}</p><p className="text-xs text-muted-foreground">Average high · 14 days</p></div>
+              <div className="rounded-xl bg-foreground/[0.04] p-4"><p className="num font-display text-2xl font-semibold">{data ? humidDays : "—"}</p><p className="text-xs text-muted-foreground">Days above 80% humidity</p></div>
             </CardContent>
           </Card>
         </div>

@@ -127,26 +127,3 @@ export interface WeatherData {
   days: WeatherDay[];
   hours: WeatherHour[];
 }
-
-export type AlertSeverity = "info" | "warning" | "critical";
-export type EvidenceKind =
-  | "sensor-simulated"
-  | "sensor-live"
-  | "sensor-backend-simulated"
-  | "sensor-manual"
-  | "sensor-unavailable"
-  | "weather-historical"
-  | "weather-forecast"
-  | "weather-simulated"
-  | "camera-ai"
-  | "camera-demo";
-
-export interface Alert {
-  id: string;
-  severity: AlertSeverity;
-  category: "temperature" | "humidity" | "light" | "growth" | "weather" | "camera";
-  title: string;
-  message: string;
-  action: string;
-  evidence: { kind: EvidenceKind; detail: string }[];
-}
