@@ -75,3 +75,9 @@ See the [user guide](docs/user-guide.md), [architecture and known limitations](d
 Model setup, held-out classifier results, source licensing, and unimplemented datasets: [model validation](docs/model-validation.md).
 
 See [deployment and troubleshooting](docs/deployment.md) for end-to-end local instructions, request examples, and container deployment limitations.
+
+## Language support (work in progress)
+
+The 3D interface has a language selector for English, Spanish, Simplified Chinese, Hindi, Brazilian Portuguese, French, Arabic, Turkish, German and Vietnamese. Navigation and much of the interface use static translation dictionaries; some dynamic descriptions and generated text may still appear in English. Arabic sets the document direction to right-to-left, but the full layout has not yet been reviewed for RTL.
+
+The selected locale is sent to the backend for Gemini reports. When Gemini is unavailable, a deterministic fallback report may be assembled using machine-translated phrases; the English original is available for comparison and included in the UTF-8 download. If a phrase cannot be safely translated, the report remains in English and is labeled accordingly. Previously generated reports keep their original language after a UI language change. Translations require independent review, particularly for agricultural recommendations, and coverage is not yet complete. PDF export is not implemented.

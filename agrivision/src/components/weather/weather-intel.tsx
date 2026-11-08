@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { AlertTriangle, CloudRain, Droplets, LocateFixed, MapPin, RefreshCw, Thermometer, TrendingUp, Wind } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -72,7 +73,7 @@ export function WeatherIntel() {
 
   return (
     <div>
-      <PageHeader eyebrow="Weather intelligence" title={<>Field <span className="text-gradient">Weather Intelligence</span></>} description="Two weeks of weather history and a 7-day forecast, translated into growing conditions for tomatoes.">
+      <PageHeader eyebrow="Weather intelligence" title={<><Localized id="ui_f45fc1dfdc96db27" fallback="Field" />{" "}<span className="text-gradient"><Localized id="ui_80db1a7acc05408b" fallback="Weather Intelligence" /></span></>} description="Two weeks of weather history and a 7-day forecast, translated into growing conditions for tomatoes.">
         <div className="flex flex-wrap items-center gap-2">
           <div className="glass flex items-center gap-2 rounded-full py-1 pl-3 pr-1">
             <MapPin className="h-3.5 w-3.5 text-primary" />
@@ -92,15 +93,15 @@ export function WeatherIntel() {
             </select>
             <Button size="sm" variant="ghost" onClick={useMyLocation} aria-label="Use my location"><LocateFixed /></Button>
           </div>
-          <Button size="sm" variant="glass" onClick={reload} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} /> Refresh</Button>
+          <Button size="sm" variant="glass" onClick={reload} disabled={loading}><RefreshCw className={loading ? "animate-spin" : ""} />{" "}<Localized id="ui_0e91610117029a62" fallback="Refresh" /></Button>
         </div>
       </PageHeader>
 
       <div className="container mt-10 space-y-4">
         {(error || data?.source === "simulated") && (
           <div className="flex items-center gap-3 rounded-2xl border border-gold-500/40 bg-gold-400/10 px-4 py-3 text-sm">
-            <Badge variant="demo">Simulated weather</Badge>
-            <span>Open-Meteo could not be reached{error ? ` (${error})` : ""}. Showing labeled simulated weather instead.</span>
+            <Badge variant="demo"><Localized id="ui_976727eb0e60c0c5" fallback="Simulated weather" /></Badge>
+            <span><Localized id="ui_30983965b9557756" fallback="Open-Meteo could not be reached" />{error ? ` (${error})` : ""}<Localized id="ui_6878c0d225059151" fallback=". Showing labeled simulated weather instead." /></span>
           </div>
         )}
         {geoMsg && <p className="text-sm text-muted-foreground">{geoMsg}</p>}
@@ -111,7 +112,7 @@ export function WeatherIntel() {
             <div className="relative flex h-full flex-col justify-between gap-6 p-6 sm:p-8">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-white/70">{data?.locationName ?? location.name} · now</p>
+                  <p className="text-sm text-white/70">{data?.locationName ?? location.name}{" "}<Localized id="ui_4bd85caaf454c89e" fallback="· now" /></p>
                   <p className="mt-2 font-display text-7xl font-semibold tracking-tight">{data ? Math.round(data.current.temp) : "—"}°</p>
                   <p className="mt-1 text-lg text-white/85">{now?.label ?? "Loading…"}</p>
                 </div>
@@ -138,15 +139,15 @@ export function WeatherIntel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-gold-500" /> Growing-condition alerts</CardTitle>
-              <CardDescription>Based on forecast, history and your thresholds.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-gold-500" />{" "}<Localized id="ui_9366d7f07233e1fc" fallback="Growing-condition alerts" /></CardTitle>
+              <CardDescription><Localized id="ui_79d5725b5a66c588" fallback="Based on forecast, history and your thresholds." /></CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {alerts.length === 0 && <p className="rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300">No unfavorable growing conditions detected for the next few days.</p>}
+              {alerts.length === 0 && <p className="rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-300"><Localized id="ui_1811cd90e2439ae8" fallback="No unfavorable growing conditions detected for the next few days." /></p>}
               {alerts.map((a) => (
                 <div key={a.id} className={cn("rounded-2xl border p-3.5", a.severity === "critical" ? "border-red-500/40 bg-red-500/10" : a.severity === "warning" ? "border-yellow-500/40 bg-yellow-500/10" : "border-border bg-foreground/[0.03]")}>
-                  <p className="text-sm font-semibold">{a.title}</p>
-                  <p className="mt-0.5 text-sm text-foreground/75">{a.message}</p>
+                  <p className="text-sm font-semibold"><LocalizedText text={a.title} /></p>
+                  <p className="mt-0.5 text-sm text-foreground/75"><LocalizedText text={a.message} /></p>
                   <div className="mt-2 flex flex-wrap gap-1.5">{a.evidence.map((e) => <EvidenceBadge key={e.detail} kind={e.kind} />)}</div>
                 </div>
               ))}
@@ -169,7 +170,7 @@ export function WeatherIntel() {
         {/* Forecast strip */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>7-day forecast</CardTitle>
+            <CardTitle><Localized id="ui_c124b17a27e443b6" fallback="7-day forecast" /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
@@ -195,8 +196,8 @@ export function WeatherIntel() {
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Thermometer className="h-5 w-5" style={{ color: CHART_COLORS.temp }} /> Temperature history & forecast</CardTitle>
-              <CardDescription>Daily range (min–max). Dashed line marks today; red line is your heat limit.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Thermometer className="h-5 w-5" style={{ color: CHART_COLORS.temp }} />{" "}<Localized id="ui_2ab29163d41081a2" fallback="Temperature history & forecast" /></CardTitle>
+              <CardDescription><Localized id="ui_9151bc3cafb495b2" fallback="Daily range (min–max). Dashed line marks today; red line is your heat limit." /></CardDescription>
             </CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -222,8 +223,8 @@ export function WeatherIntel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><CloudRain className="h-5 w-5" style={{ color: CHART_COLORS.rain }} /> Rainfall</CardTitle>
-              <CardDescription>Daily precipitation. Lighter bars are forecast.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><CloudRain className="h-5 w-5" style={{ color: CHART_COLORS.rain }} />{" "}<Localized id="ui_1057922f08186d71" fallback="Rainfall" /></CardTitle>
+              <CardDescription><Localized id="ui_9fa8890f5e8ac8cd" fallback="Daily precipitation. Lighter bars are forecast." /></CardDescription>
             </CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -244,8 +245,8 @@ export function WeatherIntel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Droplets className="h-5 w-5" style={{ color: CHART_COLORS.humidity }} /> Humidity trend · 7 days</CardTitle>
-              <CardDescription>Hourly relative humidity. Sustained values above your limit raise fungal risk.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Droplets className="h-5 w-5" style={{ color: CHART_COLORS.humidity }} />{" "}<Localized id="ui_4d28cc7691ca9e8f" fallback="Humidity trend · 7 days" /></CardTitle>
+              <CardDescription><Localized id="ui_c05638e42ccdfe42" fallback="Hourly relative humidity. Sustained values above your limit raise fungal risk." /></CardDescription>
             </CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">
@@ -263,8 +264,8 @@ export function WeatherIntel() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" style={{ color: CHART_COLORS.growth }} /> Growing degree days</CardTitle>
-              <CardDescription>Heat accumulation for tomatoes (base 10 °C, cap 30 °C) over the last 14 days.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" style={{ color: CHART_COLORS.growth }} />{" "}<Localized id="ui_689fe59ab00f0b80" fallback="Growing degree days" /></CardTitle>
+              <CardDescription><Localized id="ui_a4b586c6d0b9f83f" fallback="Heat accumulation for tomatoes (base 10 °C, cap 30 °C) over the last 14 days." /></CardDescription>
             </CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">

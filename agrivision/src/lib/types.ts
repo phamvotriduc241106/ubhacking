@@ -81,7 +81,7 @@ export interface AnalysisResult {
   environment: EnvironmentRating;
   environmentNotes: string[];
   colorStats?: { red: number; orange: number; green: number; yellow: number; brown: number };
-  report?: { source: string; text: string; gemini_status: string } | null;
+  report?: { source: string; text: string; gemini_status: string; locale: string; requested_locale: string; translation_method?: string; original_text?: string | null } | null;
   disagreement?: string | null;
   detector?: { status: string; message: string; width: number | null; height: number | null; counts: Record<string, number>; detections: Array<{ box: number[]; label: string; confidence: number; uncertain: boolean; raw_label: string }> } | null;
   recommendations?: Array<{ category: string; title: string; recommendation: string; next_action: string; limitations: string[]; references: Array<{ id: string; title: string; url: string }> }>;

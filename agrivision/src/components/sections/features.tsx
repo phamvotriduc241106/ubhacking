@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { Bell, Box, CloudSun, Gauge, ScanSearch, Sprout } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ export function Features() {
     <section className="container py-24 sm:py-32">
       <SectionHeading
         eyebrow="Platform"
-        title={<>One intelligent layer over <span className="text-gradient">every plant</span> in your field.</>}
+        title={<><Localized id="ui_3089ba396db15717" fallback="One intelligent layer over" />{" "}<span className="text-gradient"><Localized id="ui_d7bef96a45c27e35" fallback="every plant" /></span>{" "}<Localized id="ui_7cb8f55a64135863" fallback="in your field." /></>}
         description="FolLand connects what your sensors measure, what your camera sees and what the sky is doing — then tells you what matters today."
       />
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -30,9 +31,9 @@ export function Features() {
               <span className="grid h-11 w-11 place-items-center rounded-2xl border border-border/60 bg-background/40" style={{ color: f.accent }}>
                 <f.icon className="h-5 w-5" />
               </span>
-              <h3 className="text-xl font-semibold">{f.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{f.text}</p>
-              <span className="mt-auto text-sm font-medium text-primary opacity-80 transition-all group-hover:translate-x-1 group-hover:opacity-100">Open →</span>
+              <h3 className="text-xl font-semibold"><LocalizedText text={f.title} /></h3>
+              <p className="text-sm leading-relaxed text-muted-foreground"><LocalizedText text={f.text} /></p>
+              <span className="mt-auto text-sm font-medium text-primary opacity-80 transition-all group-hover:translate-x-1 group-hover:opacity-100"><Localized id="ui_1d2902ca81b6d2db" fallback="Open →" /></span>
             </Link>
           </motion.div>
         ))}

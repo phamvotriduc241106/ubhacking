@@ -137,6 +137,7 @@ export async function checkBackend(signal?: AbortSignal): Promise<BackendStatus>
 export async function aiAnalysis(
   file: File,
   soilCondition: string,
+  locale: string,
   reading: SensorReading | null,
   t: Thresholds,
 ): Promise<AnalysisResult> {
@@ -144,6 +145,7 @@ export async function aiAnalysis(
   fd.append("image", file);
   fd.append("crop", "tomato");
   fd.append("soil_condition", soilCondition);
+  fd.append("locale", locale);
   const res = await fetch("/api/folland/analyze", { method: "POST", body: fd });
   if (!res.ok) {
     let detail = `Backend returned ${res.status}`;

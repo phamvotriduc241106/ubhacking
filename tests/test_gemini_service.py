@@ -40,3 +40,12 @@ def test_provider_failures_are_sanitized(monkeypatch, error, status):
     fake_client(monkeypatch, error=error)
     assert asyncio.run(service.observe(b'image', 'image/jpeg')) == (None, status)
     assert asyncio.run(service.write_report({})) == (None, status)
+
+
+def test_report_prompt_requests_selected_language(monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only-secret')
+    call = fake_client(monkeypatch, 'Rapport en français.')
+    result = asyncio.run(service.write_report({'temperature_c': 24.5}, 'fr'))
+    assert result == ('Rapport en français.', 'available')
+    assert 'French' in call.call_args.kwargs['config'].system_instruction
+    assert '24.5' in call.call_args.kwargs['contents']

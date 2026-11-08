@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized } from "@/i18n/localized";
 import { Activity, Droplets, Ruler, Sun, Thermometer } from "lucide-react";
 import { CHART_COLORS } from "@/components/charts/chart-theme";
 import { SensorChart } from "@/components/charts/sensor-chart";
@@ -51,7 +52,7 @@ export function SensorDashboard() {
     <div>
       <PageHeader
         eyebrow="IoT telemetry"
-        title={<>Sensor <span className="text-gradient">Dashboard</span></>}
+        title={<><Localized id="ui_162cc64ca1e4ffe9" fallback="Sensor" />{" "}<span className="text-gradient"><Localized id="ui_67b696468610b879" fallback="Dashboard" /></span></>}
         description="Microclimate readings from the field, refreshed every few seconds, with 24-hour history."
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -63,8 +64,8 @@ export function SensorDashboard() {
       <div className="container mt-10 space-y-4">
         {mode === "demo" && (
           <Reveal className="flex items-center gap-3 rounded-2xl border border-gold-500/30 bg-gold-400/10 px-4 py-3 text-sm">
-            <span className="rounded-full bg-gold-400/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500 dark:text-gold-300">Demo Mode</span>
-            <span className="text-foreground/80">All readings on this page are simulated. Connect a real sensor in the Data source panel below.</span>
+            <span className="rounded-full bg-gold-400/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500 dark:text-gold-300"><Localized id="ui_48d5bb9e78a0f1dc" fallback="Demo Mode" /></span>
+            <span className="text-foreground/80"><Localized id="ui_1f8f725c955d8716" fallback="All readings on this page are simulated. Connect a real sensor in the Data source panel below." /></span>
           </Reveal>
         )}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -90,10 +91,10 @@ export function SensorDashboard() {
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5 text-primary" /> Environmental trends</CardTitle>
-                <CardDescription>Temperature, humidity and light over time. Toggle series and range.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />{" "}<Localized id="ui_19146ee9bb3b2e59" fallback="Environmental trends" /></CardTitle>
+                <CardDescription><Localized id="ui_5a37b5a090643b3d" fallback="Temperature, humidity and light over time. Toggle series and range." /></CardDescription>
               </div>
-              {latest && <span className="text-xs text-muted-foreground">Last reading {formatTime(latest.timestamp)}</span>}
+              {latest && <span className="text-xs text-muted-foreground"><Localized id="ui_1e21c98144d732a3" fallback="Last reading" />{" "}{formatTime(latest.timestamp)}</span>}
             </div>
           </CardHeader>
           <CardContent>

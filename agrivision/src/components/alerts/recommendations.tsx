@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertOctagon, AlertTriangle, Camera, CheckCircle2, CloudSun, Droplets, Info, RotateCcw, Sprout, Sun, Thermometer } from "lucide-react";
 import Link from "next/link";
@@ -48,7 +49,7 @@ export function Recommendations() {
     <div>
       <PageHeader
         eyebrow="Decision support"
-        title={<>Smart <span className="text-gradient">Recommendations</span></>}
+        title={<><Localized id="ui_9e6ad6db21dbc4cc" fallback="Smart" />{" "}<span className="text-gradient"><Localized id="ui_0738ee00b61bc3af" fallback="Recommendations" /></span></>}
         description="Camera observations, sensor measurements and weather history fused into prioritized actions. Every alert shows whether its evidence is real or simulated."
       />
       <div className="container mt-10 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
@@ -56,27 +57,27 @@ export function Recommendations() {
           <div className="grid grid-cols-3 gap-3">
             {(["critical", "warning", "info"] as const).map((s) => (
               <div key={s} className="glass rounded-2xl p-4">
-                <p className="text-xs text-muted-foreground">{SEV[s].label}</p>
+                <p className="text-xs text-muted-foreground"><LocalizedText text={SEV[s].label} /></p>
                 <p className="num font-display text-3xl font-semibold">{counts[s]}</p>
               </div>
             ))}
           </div>
           <div className="glass flex flex-wrap items-center gap-2 rounded-2xl px-4 py-3 text-xs">
-            <span className="font-semibold text-muted-foreground">Evidence sources:</span>
+            <span className="font-semibold text-muted-foreground"><Localized id="ui_3cac211e44694f0d" fallback="Evidence sources:" /></span>
             <OriginBadge origin={latest?.origin} />
             <Badge variant={weather?.source === "open-meteo" ? "live" : "demo"}>{weather ? (weather.source === "open-meteo" ? "● Open-Meteo weather" : "◌ Simulated weather") : "Weather loading"}</Badge>
             <Badge variant={analysis ? (analysis.source === "ai" ? "live" : "demo") : "outline"}>
               {analysis ? (analysis.source === "ai" ? "● Camera · AI" : "◌ Camera · demo heuristic") : "No photo analyzed"}
             </Badge>
-            {!analysis && <Link href="/analysis" className="font-medium text-primary hover:underline">Add a photo →</Link>}
+            {!analysis && <Link href="/analysis" className="font-medium text-primary hover:underline"><Localized id="ui_66758fd0c977eaf8" fallback="Add a photo →" /></Link>}
           </div>
           <AnimatePresence initial={false}>
             {alerts.length === 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass flex items-center gap-3 rounded-3xl p-6">
                 <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                 <div>
-                  <p className="font-semibold">All clear</p>
-                  <p className="text-sm text-muted-foreground">No readings are outside your thresholds right now.</p>
+                  <p className="font-semibold"><Localized id="ui_96ed94a7e3ac84bf" fallback="All clear" /></p>
+                  <p className="text-sm text-muted-foreground"><Localized id="ui_dda747f9f0d00bfb" fallback="No readings are outside your thresholds right now." /></p>
                 </div>
               </motion.div>
             )}
@@ -97,11 +98,11 @@ export function Recommendations() {
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-foreground/[0.06]"><Cat className="h-5 w-5" /></span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-semibold">{a.title}</h3>
-                        <Badge variant={S.badge}><S.icon className="h-3 w-3" /> {S.label}</Badge>
+                        <h3 className="text-base font-semibold"><LocalizedText text={a.title} /></h3>
+                        <Badge variant={S.badge}><S.icon className="h-3 w-3" /> <LocalizedText text={S.label} /></Badge>
                       </div>
-                      <p className="mt-1 text-sm text-foreground/80">{a.message}</p>
-                      <p className="mt-2 rounded-xl bg-primary/[0.08] px-3 py-2 text-sm"><span className="font-semibold text-primary">Action:</span> {a.action}</p>
+                      <p className="mt-1 text-sm text-foreground/80"><LocalizedText text={a.message} /></p>
+                      <p className="mt-2 rounded-xl bg-primary/[0.08] px-3 py-2 text-sm"><span className="font-semibold text-primary"><Localized id="ui_7d9fda4ea8538475" fallback="Action:" /></span> <LocalizedText text={a.action} /></p>
                       <div className="mt-3 flex flex-wrap items-center gap-1.5">
                         {a.evidence.map((e) => (
                           <span key={e.detail} className="flex items-center gap-1.5">
@@ -122,17 +123,17 @@ export function Recommendations() {
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <div>
-                <CardTitle>Alert thresholds</CardTitle>
-                <CardDescription>Adjust to your variety and site. Saved in this browser.</CardDescription>
+                <CardTitle><Localized id="ui_69a34f34a6711b2d" fallback="Alert thresholds" /></CardTitle>
+                <CardDescription><Localized id="ui_fdfe68a05bc1a08e" fallback="Adjust to your variety and site. Saved in this browser." /></CardDescription>
               </div>
-              <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> Reset</Button>
+              <Button size="sm" variant="ghost" onClick={reset}><RotateCcw />{" "}<Localized id="ui_daee7606b339f3c3" fallback="Reset" /></Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
             {THRESHOLD_FIELDS.map((f) => (
               <div key={f.key}>
                 <div className="flex items-center justify-between text-sm">
-                  <label htmlFor={f.key} className="font-medium">{f.label}</label>
+                  <label htmlFor={f.key} className="font-medium"><LocalizedText text={f.label} /></label>
                   <span className="num rounded-lg bg-foreground/5 px-2 py-0.5 text-xs font-semibold">
                     {f.unit === "lux" ? formatLux(thresholds[f.key]) : thresholds[f.key]} {f.unit}
                   </span>

@@ -37,7 +37,9 @@ async def observe(image: bytes, mime: str, context: dict | None = None) -> tuple
         return None, _status(error)
 
 
-async def write_report(evidence: dict) -> tuple[str | None, str]:
+LANGUAGE_NAMES = {'en':'English', 'es':'Spanish', 'zh-CN':'Simplified Chinese', 'hi':'Hindi', 'pt-BR':'Brazilian Portuguese', 'fr':'French', 'ar':'Arabic', 'tr':'Turkish', 'de':'German', 'vi':'Vietnamese'}
+
+async def write_report(evidence: dict, locale: str = 'en') -> tuple[str | None, str]:
     key = os.getenv('GEMINI_API_KEY')
     if not key:
         return None, 'not_configured'
@@ -47,7 +49,7 @@ async def write_report(evidence: dict) -> tuple[str | None, str]:
             model=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash'),
             contents=json.dumps(evidence, ensure_ascii=False),
             config=types.GenerateContentConfig(system_instruction=(
-                "You are FolLand's agricultural reporting assistant. Write clear, practical reports for farmers using only supplied evidence and approved recommendations. Do not invent observations, measurements, probabilities, diagnoses, or override deterministic decisions. Differentiate measured, historical, predicted, simulated and unavailable information. Explain uncertainty and give actionable steps in short accessible paragraphs. Use these headings: Overall Plant Assessment, Ripeness and Harvest Readiness, Fruit Quality Assessment, Environmental Conditions, Watering Guidance, Fertilizer and Plant Health, Recommended Next Actions, Confidence and Data Limitations."), temperature=0.1)), timeout=25)
+                "You are FolLand's agricultural reporting assistant. Write clear, practical reports for farmers using only supplied evidence and approved recommendations. Do not invent observations, measurements, probabilities, diagnoses, or override deterministic decisions. Differentiate measured, historical, predicted, simulated and unavailable information. Explain uncertainty and give actionable steps in short accessible paragraphs. Write the entire report in " + LANGUAGE_NAMES[locale] + "; preserve all exact numeric values, units, source attribution, limitations and recommended actions. Translate these headings: Overall Plant Assessment, Ripeness and Harvest Readiness, Fruit Quality Assessment, Environmental Conditions, Watering Guidance, Fertilizer and Plant Health, Recommended Next Actions, Confidence and Data Limitations."), temperature=0.1)), timeout=25)
         text = response.text.strip() if response.text else None
         return (text, 'available') if text else (None, 'invalid_response')
     except Exception as error:

@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized } from "@/i18n/localized";
 import { Droplets, Sun, Thermometer } from "lucide-react";
 import Link from "next/link";
 import { CHART_COLORS } from "@/components/charts/chart-theme";
@@ -21,13 +22,13 @@ export function LivePreview() {
     <section className="container py-12">
       <SectionHeading
         eyebrow="Live telemetry"
-        title={<>Your field, <span className="text-gradient">breathing in real time.</span></>}
+        title={<><Localized id="ui_f7d972c2c5918709" fallback="Your field," />{" "}<span className="text-gradient"><Localized id="ui_6d587a489b7cac2a" fallback="breathing in real time." /></span></>}
         description="Readings update every few seconds. In Demo Mode they come from a realistic simulation, and every number is labeled with its source."
       >
         <div className="flex items-center gap-3">
           <OriginBadge origin={latest?.origin} />
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard">Open full dashboard →</Link>
+            <Link href="/dashboard"><Localized id="ui_00519f8c9af014cb" fallback="Open full dashboard →" /></Link>
           </Button>
         </div>
       </SectionHeading>

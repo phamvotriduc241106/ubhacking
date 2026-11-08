@@ -14,7 +14,7 @@ from backend.models import DetectorResult, VisualObservation, EvidenceItem
 from backend.services.tomato_detector import infer_image
 from backend.services.gemini_service import observe
 from backend.services.report_generator import generate
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import FastAPI, UploadFile, File, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import (
@@ -107,6 +107,7 @@ async def get_weather(
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_plant(
     image: Optional[UploadFile] = File(None),
+    locale: Literal["en", "es", "zh-CN", "hi", "pt-BR", "fr", "ar", "tr", "de", "vi"] = Form("en"),
     crop: str = Form("tomato"),
     variety: Optional[str] = Form(None),
     harvest_goal: str = Form("eat_now"),
@@ -222,7 +223,7 @@ async def analyze_plant(
         elif visual_obs.maturity_stage in ('red', 'turning', 'green'):
             card = decision_results['harvest']
             decision_results['harvest'] = card.model_copy(update={'limitations':['Model predictions are not calibrated for this growing environment.', 'Color alone does not establish ripeness or food safety.']})
-    report = await generate(visual_obs, detector, observation, sensor_data, weather_data, decision_results, disagreement)
+    report = await generate(visual_obs, detector, observation, sensor_data, weather_data, decision_results, disagreement, locale)
 
     response = AnalysisResponse(
         analysis_id=f"folland-{uuid.uuid4().hex[:8]}",

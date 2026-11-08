@@ -125,6 +125,10 @@ class GeminiObservation(BaseModel):
 
 
 class FarmerReport(BaseModel):
+    locale: str = 'en'
+    requested_locale: str = 'en'
+    translation_method: str = 'original'
+    original_text: Optional[str] = None
     gemini_status: str = 'unavailable'
     source: Literal['gemini', 'deterministic']
     text: str

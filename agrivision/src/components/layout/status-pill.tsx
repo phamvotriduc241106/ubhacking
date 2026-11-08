@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedText } from "@/i18n/localized";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -37,10 +38,10 @@ export function StatusPill({ className }: { className?: string }) {
             <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-60", state.dot)} />
             <span className={cn("relative inline-flex h-2 w-2 rounded-full", state.dot)} />
           </span>
-          {state.text}
+          <LocalizedText text={state.text} />
         </Link>
       </TooltipTrigger>
-      <TooltipContent>{state.tip}</TooltipContent>
+      <TooltipContent><LocalizedText text={state.tip} /></TooltipContent>
     </Tooltip>
   );
 }

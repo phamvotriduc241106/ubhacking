@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -45,9 +46,9 @@ export function MetricCard({ icon: Icon, label, value, unit, decimals = 1, forma
           <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
             <Icon className="h-[18px] w-[18px]" />
           </span>
-          <span className="text-sm font-medium text-muted-foreground">{label}</span>
+          <span className="text-sm font-medium text-muted-foreground"><LocalizedText text={label} /></span>
         </div>
-        {status && <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", TONE[status.tone])}>{status.text}</span>}
+        {status && <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", TONE[status.tone])}><LocalizedText text={status.text} /></span>}
       </div>
       <div className="mt-4 flex items-baseline gap-1.5">
         {value == null ? (
@@ -63,7 +64,7 @@ export function MetricCard({ icon: Icon, label, value, unit, decimals = 1, forma
             {delta.value >= 0 ? "▲" : "▼"} {Math.abs(delta.value).toFixed(1)}
             {delta.unit}
           </span>{" "}
-          {delta.label}
+          <LocalizedText text={delta.label} />
         </p>
       )}
       <div className="mt-auto h-12 pt-3">{trend && trend.length > 1 && <Sparkline data={trend} color={color} id={label.replace(/\W/g, "")} />}</div>

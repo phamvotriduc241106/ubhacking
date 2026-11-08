@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedText } from "@/i18n/localized";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { AnimatedNumber } from "@/components/shared/animated-number";
@@ -24,7 +25,7 @@ export function StatsBand() {
               <AnimatedNumber value={inView ? s.value : 0} decimals={0} />
               {s.suffix}
             </span>
-            <span className="text-sm text-muted-foreground">{s.label}</span>
+            <span className="text-sm text-muted-foreground"><LocalizedText text={s.label} /></span>
           </div>
         ))}
       </motion.div>
