@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 from fastapi import UploadFile, HTTPException
 from backend.models import VisualObservation, SensorReading, WeatherSummary
+from backend.services.gemini_service import gemini_model
 
 # Load environment variables
 load_dotenv()
@@ -252,7 +253,7 @@ Strict scientific guardrails:
                 effective_mime = mime_type if mime_type.startswith("image/") else "image/jpeg"
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model=gemini_model(),
                 contents=[
                     types.Part.from_bytes(
                         data=image_bytes,
@@ -290,7 +291,7 @@ Strict scientific guardrails:
                     stage_label=f"Gemini Vision: {parsed.get('stage_label', parsed.get('plant_identified', 'Analyzed'))}",
                     visual_confidence=confidence,
                     is_simulated=False,
-                    ai_provider="gemini-2.5-flash",
+                    ai_provider=gemini_model(),
                     detected_plant=parsed.get("plant_identified"),
                     detected_leaf_color=parsed.get("leaf_color"),
                     detected_leaf_symptoms=leaf_symp_raw,

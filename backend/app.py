@@ -12,7 +12,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from fastapi import HTTPException
 from backend.models import DetectorResult, VisualObservation, EvidenceItem
 from backend.services.tomato_detector import infer_image
-from backend.services.gemini_service import observe
+from backend.services.gemini_service import observe, gemini_model
 from backend.services.report_generator import generate
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, Query
@@ -177,7 +177,7 @@ async def analyze_plant(
         visual_obs = VisualObservation(photo_uploaded=True, filename=image.filename, content_type=image.content_type,
             file_size_kb=round(len(image_bytes)/1024,1), maturity_stage=stage,
             stage_label='Review detected fruit' if detector.detections else 'Tomato detection unavailable or no fruit detected',
-            visual_confidence='low', is_simulated=False, ai_provider='gemini-2.5-flash' if observation else None,
+            visual_confidence='low', is_simulated=False, ai_provider=gemini_model() if observation else None,
             detected_leaf_symptoms=observation.leaf_symptoms if observation and observation.leaf_symptoms != 'unknown' else None,
             leaf_condition_summary=observation.leaf_description if observation else None,
             observation_notes=observation.fruit_description if observation else 'Gemini visual observation unavailable; review the model result and photo manually.')
@@ -186,7 +186,7 @@ async def analyze_plant(
 
     # If Gemini analyzed the image, its automated foliage detection takes precedence over manual user selection
     effective_leaf_symptoms = leaf_symptoms
-    if visual_obs.ai_provider == "gemini-2.5-flash" and visual_obs.detected_leaf_symptoms:
+    if (visual_obs.ai_provider or "").startswith("gemini") and visual_obs.detected_leaf_symptoms:
         effective_leaf_symptoms = visual_obs.detected_leaf_symptoms
     elif (not leaf_symptoms or leaf_symptoms == "none") and visual_obs.detected_leaf_symptoms:
         effective_leaf_symptoms = visual_obs.detected_leaf_symptoms
