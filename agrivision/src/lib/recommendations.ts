@@ -1,5 +1,6 @@
 import type { Alert, AnalysisResult, EvidenceKind, SensorReading, Thresholds, WeatherData } from "./types";
 import { formatLux, round } from "./utils";
+import { locationNow } from "./weather";
 
 function sensorKind(r: SensorReading): EvidenceKind {
   return r.origin === "live" ? "sensor-live" : r.origin === "backend-simulated" ? "sensor-backend-simulated" : "sensor-simulated";
@@ -124,7 +125,7 @@ export function buildAlerts({ latest, history, weather, analysis, thresholds: t 
   if (weather) {
     const wKind: EvidenceKind = weather.source === "simulated" ? "weather-simulated" : "weather-forecast";
     const hKind: EvidenceKind = weather.source === "simulated" ? "weather-simulated" : "weather-historical";
-    const nowIso = new Date().toISOString().slice(0, 13);
+    const nowIso = locationNow(weather).hour;
     const next24 = weather.hours.filter((h) => h.time >= nowIso).slice(0, 24);
     const rain24 = next24.reduce((s, h) => s + h.precipitation, 0);
     if (rain24 > t.rainHeavyMm) {

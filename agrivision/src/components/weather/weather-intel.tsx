@@ -14,7 +14,7 @@ import { useAlerts } from "@/hooks/use-alerts";
 import { useWeather } from "@/hooks/use-weather";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { describeCode, LOCATIONS } from "@/lib/weather";
+import { describeCode, LOCATIONS, locationNow } from "@/lib/weather";
 import { WeatherBackdrop } from "./weather-backdrop";
 import { WeatherCharts } from "./lazy-weather-charts";
 
@@ -28,7 +28,7 @@ export function WeatherIntel() {
   const alerts = useAlerts().filter((a) => a.category === "weather" || a.category === "temperature");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = data ? locationNow(data).date : new Date().toISOString().slice(0, 10);
   const daily = useMemo(
     () =>
       (data?.days ?? []).map((d) => ({
@@ -45,8 +45,8 @@ export function WeatherIntel() {
   }, [daily]);
   const humidity = useMemo(() => {
     if (!data) return [];
-    const cutoff = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 13);
-    const now = new Date().toISOString().slice(0, 13);
+    const cutoff = locationNow(data, -7 * 86400000).hour;
+    const now = locationNow(data).hour;
     return data.hours.filter((h) => h.time >= cutoff && h.time <= now).filter((_, i) => i % 2 === 0).map((h) => ({ t: h.time, humidity: h.humidity, temp: h.temp }));
   }, [data]);
   const forecast = daily.filter((d) => d.date >= today).slice(0, 7);

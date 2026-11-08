@@ -13,6 +13,11 @@ from backend.models import (
 KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent.parent / "knowledge" / "tomato_rules.json"
 
 
+def _fmt(value) -> str:
+    """Format a reading; 0 is a valid measurement, only a missing value is N/A."""
+    return "N/A" if value is None else f"{value}"
+
+
 class DecisionEngine:
     _rules: Dict[str, Any] = {}
     _sources: Dict[str, ReferenceItem] = {}
@@ -42,20 +47,21 @@ class DecisionEngine:
         leaf_symptoms: str | None,
         visual: VisualObservation,
         sensors: SensorReading,
-        weather: WeatherSummary
+        weather: WeatherSummary,
+        leaf_symptoms_source: str = "user",
     ) -> Dict[str, Any]:
         cls._load_rules()
 
         harvest_card = cls._evaluate_harvest(visual, harvest_goal, variety)
         watering_card = cls._evaluate_watering(soil_condition, sensors, weather)
-        fertilizer_card = cls._evaluate_fertilizer(leaf_symptoms, soil_condition)
+        fertilizer_card = cls._evaluate_fertilizer(leaf_symptoms, soil_condition, leaf_symptoms_source)
 
         # Build comprehensive scientific summary
         summary = (
             f"FolLand Decision Summary: Evaluated {crop.capitalize()} "
             f"with visual maturity stage '{visual.stage_label}'. "
             f"Physical soil status: '{soil_condition.replace('_', ' ')}'. "
-            f"Ambient context: {sensors.air_temperature_c or 'N/A'}°C, {sensors.air_relative_humidity_pct or 'N/A'}% RH (data mode: {sensors.data_mode}). "
+            f"Ambient context: {_fmt(sensors.air_temperature_c)}°C, {_fmt(sensors.air_relative_humidity_pct)}% RH (data mode: {sensors.data_mode}). "
             f"Weather source: {weather.source}; rolling rainfall values unavailable unless measured. "
             "All recommendations adhere to extension scientific guardrails: no soil moisture is inferred from air humidity, and no fertilizer is prescribed without soil testing."
         )
@@ -256,7 +262,8 @@ class DecisionEngine:
     def _evaluate_fertilizer(
         cls,
         leaf_symptoms: str | None,
-        soil_condition: str
+        soil_condition: str,
+        leaf_symptoms_source: str = "user",
     ) -> RecommendationCard:
         sources = []
         if "psu-health" in cls._sources:
@@ -272,10 +279,16 @@ class DecisionEngine:
             "wilting": "Loss of leaf turgor / wilting reported"
         }.get(leaf_symptoms or "none", "None reported")
 
+        # Label where the symptom came from: the user's own report, an AI photo observation,
+        # or a demo scenario. AI output must not be presented as something the user reported.
+        foliage_type, foliage_label = {
+            "ai": ("PREDICTED", "Visual Foliage Observations (AI photo analysis)"),
+            "simulated": ("SIMULATED", "Visual Foliage Observations (demo scenario)"),
+        }.get(leaf_symptoms_source, ("USER_REPORTED", "Visual Foliage Observations"))
         evidence.append(EvidenceItem(
-            type="USER_REPORTED",
-            label="Visual Foliage Observations",
-            detail=symptom_display
+            type=foliage_type,
+            label=foliage_label,
+            detail=symptom_display.replace(" reported", " observed") if leaf_symptoms_source == "ai" else symptom_display
         ))
 
         evidence.append(EvidenceItem(

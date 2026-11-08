@@ -45,13 +45,14 @@ class ImageAnalysisService:
                     detail=f"Unsupported file format '{file.content_type}'. Please upload JPEG, PNG, or HEIC."
                 )
 
-            # Read file length
-            file_bytes = await file.read()
+            # Read at most one byte past the limit. A chunked upload has no Content-Length,
+            # so the request middleware cannot reject it early; never load the whole stream.
+            file_bytes = await file.read(MAX_FILE_SIZE_BYTES + 1)
             size_bytes = len(file_bytes)
             if size_bytes > MAX_FILE_SIZE_BYTES:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"File size ({round(size_bytes / (1024*1024), 1)} MB) exceeds maximum limit of 15 MB."
+                    detail="File size exceeds maximum limit of 15 MB."
                 )
 
             photo_uploaded = True
