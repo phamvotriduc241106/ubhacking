@@ -1,6 +1,6 @@
 "use client";
 
-import { Html } from "@react-three/drei";
+import { HotspotOverlay } from "./hotspot-overlay";
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
@@ -272,7 +272,7 @@ export function Hotspot({
     red: "bg-red-500",
   }[tone];
   return (
-    <Html position={position} center zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
+    <HotspotOverlay position={position}>
       <div className="relative hidden md:block" style={{ pointerEvents: "auto" }}>
         <button
           type="button"
@@ -292,6 +292,6 @@ export function Hotspot({
         </button>
         {active && children}
       </div>
-    </Html>
+    </HotspotOverlay>
   );
 }
