@@ -1,5 +1,6 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ChevronRight, Droplets, Leaf, Radio, Ruler, Sun, Thermometer, X } from "lucide-react";
 import { OriginBadge } from "@/components/shared/origin-badge";
@@ -14,7 +15,7 @@ function HealthBadge({ h }: { h: HealthStatus }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: `${m.color}20`, color: m.color }}>
       <span className="h-1.5 w-1.5 rounded-full" style={{ background: m.color }} />
-      {m.label}
+      <LocalizedText text={m.label} />
     </span>
   );
 }
@@ -63,8 +64,8 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
           <motion.div key={plant.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.3 }} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs text-muted-foreground">Zone {plant.zone} · Bed {plant.bed + 1} · Position {plant.index + 1}</p>
-                <h3 className="mt-0.5 text-2xl font-semibold">Tomato {plant.id}</h3>
+                <p className="text-xs text-muted-foreground">Zone {plant.zone}{" "}<Localized id="ui_010f25b52c7fab16" fallback="· Bed" />{" "}{plant.bed + 1}{" "}<Localized id="ui_1c04c4357da4af92" fallback="· Position" />{" "}{plant.index + 1}</p>
+                <h3 className="mt-0.5 text-2xl font-semibold"><Localized id="ui_8289a9844fd5125f" fallback="Tomato" />{" "}{plant.id}</h3>
               </div>
               <button onClick={() => selectPlant(null)} className="rounded-full p-1.5 hover:bg-foreground/10" aria-label="Close plant details">
                 <X className="h-4 w-4" />
@@ -82,16 +83,16 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
             </div>
             <div className="rounded-2xl bg-foreground/[0.04] p-3.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Estimated ripeness</span>
+                <span className="text-muted-foreground"><Localized id="ui_2008dab0e1a4778b" fallback="Estimated ripeness" /></span>
                 <span className="font-semibold">{plant.ripeness ? `${RIPENESS_META[plant.ripeness].label} · ${plant.ripenessPct}%` : "Not fruiting yet"}</span>
               </div>
               <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-gradient-to-r from-[#5c9a3c] via-[#e0a03a] to-[#d8382a] opacity-90">
                 <motion.div className="h-full bg-background/80" initial={{ marginLeft: "0%" }} animate={{ marginLeft: `${plant.ripenessPct}%` }} transition={{ duration: 0.8 }} />
               </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">Growth stage {plant.growth.toFixed(1)} / 5 — {ZONES.find((z) => z.id === plant.zone)?.focus}</p>
+              <p className="mt-2 text-[11px] text-muted-foreground"><Localized id="ui_906162c2e4038f16" fallback="Growth stage" />{" "}{plant.growth.toFixed(1)} / 5 — {ZONES.find((z) => z.id === plant.zone)?.focus}</p>
             </div>
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observations</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><Localized id="ui_f87558869bcf8816" fallback="Observations" /></p>
               {plant.issues.length ? (
                 <ul className="space-y-1.5">
                   {plant.issues.map((i) => (
@@ -101,27 +102,25 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
                   ))}
                 </ul>
               ) : (
-                <p className="flex gap-2 text-sm"><Leaf className="h-4 w-4 text-emerald-500" /> No issues observed.</p>
+                <p className="flex gap-2 text-sm"><Leaf className="h-4 w-4 text-emerald-500" />{" "}<Localized id="ui_083f9b115edab2b3" fallback="No issues observed." /></p>
               )}
             </div>
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested actions</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><Localized id="ui_b24c7c25424d7f20" fallback="Suggested actions" /></p>
               <ul className="space-y-1.5 text-sm">
                 {plantAdvice(plant).map((a) => (
                   <li key={a} className="flex gap-2"><ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {a}</li>
                 ))}
               </ul>
             </div>
-            <p className="mt-auto text-[11px] leading-relaxed text-muted-foreground">
-              Plant-level conditions are modeled from zone sensor readings and a demo scouting log. They are not individual plant measurements.
-            </p>
+            <p className="mt-auto text-[11px] leading-relaxed text-muted-foreground"><Localized id="ui_eb4c23f6e4d4cabc" fallback="Plant-level conditions are modeled from zone sensor readings and a demo scouting log. They are not individual plant measurements." /></p>
           </motion.div>
         ) : sensor ? (
           <motion.div key={sensor.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Zone {sensor.zone} · {ZONES.find((z) => z.id === sensor.zone)?.name}</p>
-                <h3 className="mt-0.5 flex items-center gap-2 text-2xl font-semibold"><Radio className="h-5 w-5 text-primary" /> {sensor.label}</h3>
+                <h3 className="mt-0.5 flex items-center gap-2 text-2xl font-semibold"><Radio className="h-5 w-5 text-primary" /> <LocalizedText text={sensor.label} /></h3>
               </div>
               <button onClick={() => onSensor(null)} className="rounded-full p-1.5 hover:bg-foreground/10" aria-label="Close sensor details"><X className="h-4 w-4" /></button>
             </div>
@@ -141,15 +140,15 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
                 })()}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Waiting for readings…</p>
+              <p className="text-sm text-muted-foreground"><Localized id="ui_dde0205d19c75310" fallback="Waiting for readings…" /></p>
             )}
-            <p className="text-xs text-muted-foreground">Hardware profile: DHT22 temperature/humidity, BH1750 light, HC-SR04 ultrasonic distance. Zone readings apply a per-zone microclimate offset to the main feed.</p>
+            <p className="text-xs text-muted-foreground"><Localized id="ui_7104bccabe61bfaf" fallback="Hardware profile: DHT22 temperature/humidity, BH1750 light, HC-SR04 ultrasonic distance. Zone readings apply a per-zone microclimate offset to the main feed." /></p>
           </motion.div>
         ) : (
           <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
             <div>
-              <h3 className="text-xl font-semibold">Farm overview</h3>
-              <p className="text-sm text-muted-foreground">Click any plant or sensor in the scene, or pick a zone.</p>
+              <h3 className="text-xl font-semibold"><Localized id="ui_ce176b8832ae1bc9" fallback="Farm overview" /></h3>
+              <p className="text-sm text-muted-foreground"><Localized id="ui_3dfdbb95cb61fd80" fallback="Click any plant or sensor in the scene, or pick a zone." /></p>
             </div>
             <div className="grid gap-2">
               {ZONES.map((z) => {
@@ -177,7 +176,7 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
               })}
             </div>
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Needs a look ({flagged.length})</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"><Localized id="ui_9bb0983e8703e40a" fallback="Needs a look (" />{flagged.length})</p>
               {flagged.length ? (
                 <ul className="grid gap-1.5">
                   {flagged.slice(0, 8).map((p) => (
@@ -193,7 +192,7 @@ export function FarmInspector({ plants, sensorId, onSensor }: { plants: PlantSta
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">Every plant in this view looks healthy.</p>
+                <p className="text-sm text-muted-foreground"><Localized id="ui_b2d2a480cb02f8ac" fallback="Every plant in this view looks healthy." /></p>
               )}
             </div>
           </motion.div>

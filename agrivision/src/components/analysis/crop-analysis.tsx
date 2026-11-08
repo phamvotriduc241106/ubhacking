@@ -1,8 +1,10 @@
 "use client";
 
+import { Localized, LocalizedText } from "@/i18n/localized";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Camera, FlaskConical, ImagePlus, Loader2, RefreshCw, ScanSearch, Server, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/shared/section-heading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +18,7 @@ type Engine = "ai" | "demo";
 const MAX_MB = 15;
 
 export function CropAnalysis() {
+  const { t } = useTranslation();
   const latest = useApp((s) => s.latest);
   const thresholds = useApp((s) => s.thresholds);
   const setAnalysis = useApp((s) => s.setAnalysis);
@@ -107,7 +110,7 @@ export function CropAnalysis() {
     <div>
       <PageHeader
         eyebrow="Computer vision"
-        title={<>AI Crop <span className="text-gradient">Health Analysis</span></>}
+        title={<><Localized id="ui_f0ffb2082d9bc61b" fallback="AI Crop" />{" "}<span className="text-gradient"><Localized id="ui_6a294cb4bdd338ef" fallback="Health Analysis" /></span></>}
         description="Upload a photo of a tomato plant or fruit. See visible symptoms, ripeness and actionable suggestions, alongside available microclimate readings."
       />
       <div className="container mt-10 grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -150,14 +153,13 @@ export function CropAnalysis() {
                   <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary animate-float">
                     <ImagePlus className="h-7 w-7" />
                   </span>
-                  <p className="font-display text-lg font-semibold">Drop a tomato photo here</p>
-                  <p className="text-sm text-muted-foreground">JPEG, PNG, WebP or HEIC · up to {MAX_MB} MB</p>
+                  <p className="font-display text-lg font-semibold"><Localized id="ui_2c105d63f7aaf5aa" fallback="Drop a tomato photo here" /></p>
+                  <p className="text-sm text-muted-foreground"><Localized id="ui_5fb77c65334c87af" fallback="JPEG, PNG, WebP or HEIC · up to" />{" "}{MAX_MB} MB</p>
                   <div className="mt-2 flex flex-wrap justify-center gap-2">
-                    <Button size="sm" onClick={() => input.current?.click()}><Upload /> Choose photo</Button>
+                    <Button size="sm" onClick={() => input.current?.click()}><Upload />{" "}<Localized id="ui_9c5bb7ae0e7da3f4" fallback="Choose photo" /></Button>
                     <Button size="sm" variant="outline" asChild>
                       <label className="cursor-pointer">
-                        <Camera /> Take photo
-                        <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => accept(e.target.files?.[0])} />
+                        <Camera />{" "}<Localized id="ui_7100ac9979a623d5" fallback="Take photo" /><input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => accept(e.target.files?.[0])} />
                       </label>
                     </Button>
                   </div>
@@ -169,8 +171,8 @@ export function CropAnalysis() {
               <div className="flex flex-wrap items-center justify-between gap-2 px-5 pb-4 text-sm">
                 <span className="truncate text-muted-foreground">{file.name} · {(file.size / 1024).toFixed(0)} KB</span>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => input.current?.click()} disabled={busy}><RefreshCw /> Replace</Button>
-                  <Button size="sm" variant="ghost" onClick={clear} disabled={busy}><Trash2 /> Remove</Button>
+                  <Button size="sm" variant="ghost" onClick={() => input.current?.click()} disabled={busy}><RefreshCw />{" "}<Localized id="ui_95e154398a4bc009" fallback="Replace" /></Button>
+                  <Button size="sm" variant="ghost" onClick={clear} disabled={busy}><Trash2 />{" "}<Localized id="ui_c3812fc4acb861d5" fallback="Remove" /></Button>
                 </div>
               </div>
             )}
@@ -178,8 +180,8 @@ export function CropAnalysis() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Analysis engine</CardTitle>
-              <CardDescription>Use the connected backend for model analysis, or explicitly select the demo heuristic.</CardDescription>
+              <CardTitle><Localized id="ui_b6e9df2095d086f5" fallback="Analysis engine" /></CardTitle>
+              <CardDescription><Localized id="ui_008a58650781730d" fallback="Use the connected backend for model analysis, or explicitly select the demo heuristic." /></CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2 sm:grid-cols-2">
@@ -199,8 +201,8 @@ export function CropAnalysis() {
                   >
                     <o.icon className={cn("mt-0.5 h-5 w-5 shrink-0", o.id === "ai" ? "text-emerald-500" : "text-gold-500")} />
                     <span>
-                      <span className="block text-sm font-semibold">{o.title}</span>
-                      <span className="block text-xs text-muted-foreground">{o.text}</span>
+                      <span className="block text-sm font-semibold"><LocalizedText text={o.title} /></span>
+                      <span className="block text-xs text-muted-foreground"><LocalizedText text={o.text} /></span>
                     </span>
                   </button>
                 ))}
@@ -210,20 +212,20 @@ export function CropAnalysis() {
                   <Server className="h-3.5 w-3.5" />
                   {backend == null ? "Checking AI backend…" : backend.reachable ? "FolLand backend reachable" : "AI backend not running — demo heuristic only"}
                 </span>
-                <button onClick={probe} className="font-medium text-primary hover:underline">Recheck</button>
+                <button onClick={probe} className="font-medium text-primary hover:underline"><Localized id="ui_1f47d8366934f024" fallback="Recheck" /></button>
               </div>
               {engine === "ai" && (
                 <div className="space-y-2 text-sm">
-                  <label htmlFor="soil" className="font-medium">How does the soil feel?</label>
+                  <label htmlFor="soil" className="font-medium">{t("soil")}</label>
                   <select id="soil" value={soil} onChange={(e) => setSoil(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2">
-                    <option value="unknown">I have not checked</option><option value="dry_at_5cm">Dry about 5 cm below the surface</option><option value="moist">Moist</option><option value="wet">Very wet</option>
+                    <option value="unknown">{t("unknown")}</option><option value="dry_at_5cm">{t("dry")}</option><option value="moist">{t("moist")}</option><option value="wet">{t("wet")}</option>
                   </select>
-                  <p className="text-xs text-muted-foreground">Gemini is configured on the server. When enabled, photos are sent to Google. No key is needed in the browser.</p>
+                  <p className="text-xs text-muted-foreground"><Localized id="ui_231453f9ee300d6f" fallback="Gemini is configured on the server. When enabled, photos are sent to Google. No key is needed in the browser." /></p>
                 </div>
               )}
               <Button className="w-full" size="lg" onClick={run} disabled={!file || busy}>
                 {busy ? <Loader2 className="animate-spin" /> : <ScanSearch />}
-                {busy ? "Analyzing…" : engine === "ai" ? "Analyze with AI" : "Run demo analysis"}
+                {busy ? t("loading") : engine === "ai" ? t("analyze") : "Run demo analysis"}
               </Button>
               {error && <p className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-300">{error}</p>}
             </CardContent>
@@ -240,10 +242,8 @@ export function CropAnalysis() {
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass grid h-full min-h-[420px] place-items-center rounded-3xl p-8 text-center">
                 <div className="max-w-sm space-y-3">
                   <ScanSearch className="mx-auto h-10 w-10 text-primary/70" />
-                  <h3 className="text-xl font-semibold">Results appear here</h3>
-                  <p className="text-sm text-muted-foreground">
-                    You will see available observations, model results, environmental context and a report.
-                  </p>
+                  <h3 className="text-xl font-semibold"><Localized id="ui_1aabd487707fdebd" fallback="Results appear here" /></h3>
+                  <p className="text-sm text-muted-foreground"><Localized id="ui_1a41c1c62c4ccb50" fallback="You will see available observations, model results, environmental context and a report." /></p>
                 </div>
               </motion.div>
             )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalizedText } from "@/i18n/localized";
 import { motion } from "framer-motion";
 import { BrainCircuit, Camera, CloudSun, Radio, Sparkles } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
@@ -23,8 +24,8 @@ export function Pipeline() {
             <span className="glass glow-ring relative z-10 grid h-14 w-14 place-items-center rounded-2xl text-primary">
               <s.icon className="h-6 w-6" />
             </span>
-            <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
-            <p className="mt-1.5 max-w-[220px] text-sm text-muted-foreground">{s.text}</p>
+            <h3 className="mt-4 text-lg font-semibold"><LocalizedText text={s.title} /></h3>
+            <p className="mt-1.5 max-w-[220px] text-sm text-muted-foreground"><LocalizedText text={s.text} /></p>
           </motion.div>
         ))}
       </div>
