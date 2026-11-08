@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Droplets, LayoutDashboard, MousePointer2, Sun, Thermometer } from "lucide-react";
+import { ArrowRight, Droplets, LayoutDashboard, MousePointer2, ScanSearch, Sun, Thermometer } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { SceneLoader } from "@/components/three/scene-fallback";
@@ -58,6 +58,11 @@ export function Hero() {
               <Button size="lg" variant="glass" asChild>
                 <Link href="/dashboard">
                   <LayoutDashboard /> Launch Live Dashboard
+                </Link>
+              </Button>
+              <Button size="lg" variant="glass" asChild>
+                <Link href="/analysis">
+                  <ScanSearch /> Crop AI
                 </Link>
               </Button>
             </motion.div>
