@@ -4,5 +4,4 @@ export const NAV = [
   { href: "/analysis", label: "Crop AI" },
   { href: "/weather", label: "Weather" },
   { href: "/growth", label: "Growth" },
-  { href: "/alerts", label: "Alerts" },
 ];

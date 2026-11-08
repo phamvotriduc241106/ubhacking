@@ -1,13 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useAlerts } from "@/hooks/use-alerts";
 import { NAV } from "@/lib/nav";
 import { prefetchScene } from "@/lib/prefetch";
 import { cn } from "@/lib/utils";
@@ -20,8 +19,6 @@ export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const alerts = useAlerts();
-  const urgent = alerts.filter((a) => a.severity !== "info").length;
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12);
@@ -71,14 +68,6 @@ export function Navbar() {
             </a>
           </Button>
           <StatusPill className="hidden sm:inline-flex" />
-          <Button variant="ghost" size="icon" asChild aria-label={`${urgent} active alerts`}>
-            <Link href="/alerts" className="relative">
-              <Bell className="h-4 w-4" />
-              {urgent > 0 && (
-                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{urgent}</span>
-              )}
-            </Link>
-          </Button>
           <ThemeToggle />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
