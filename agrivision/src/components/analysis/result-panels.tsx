@@ -82,7 +82,21 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
       {isBackend && result.detector && <Panel title="Detected fruit" icon={<Leaf className="h-3.5 w-3.5" />} delay={0}>
         <p className="text-sm text-muted-foreground"><LocalizedText text={result.detector.message} /></p>
         <p className="mt-2 text-sm font-semibold">{result.detector.status === "ok" ? `${result.detector.detections.length} candidate fruit` : `Detector ${result.detector.status}`}</p>
-        {preview && result.detector.status === "ok" && result.detector.width && result.detector.height && <div className="relative mt-3 overflow-hidden rounded-xl"><img src={preview} alt="Tomato photo with detected fruit outlined" className="block h-auto w-full"/><svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${result.detector.width} ${result.detector.height}`} preserveAspectRatio="none" aria-hidden="true">{result.detector.detections.map((d,i) => <rect key={i} x={d.box[0]} y={d.box[1]} width={d.box[2]-d.box[0]} height={d.box[3]-d.box[1]} fill="none" stroke="#a5f36c" strokeWidth={Math.max(2,result.detector!.width!/300)}/>)}</svg></div>}
+        {preview && result.detector.status === "ok" && result.detector.width && result.detector.height && <div className="relative mt-3 overflow-hidden rounded-xl">
+          <img src={preview} alt="Tomato photo with numbered detected fruit outlined" className="block h-auto w-full"/>
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${result.detector.width} ${result.detector.height}`} preserveAspectRatio="none" aria-hidden="true">
+            {result.detector.detections.map((d,i) => <rect key={i} x={d.box[0]} y={d.box[1]} width={d.box[2]-d.box[0]} height={d.box[3]-d.box[1]} fill="none" stroke="#a5f36c" strokeWidth={Math.max(2,result.detector!.width!/300)}/>)}
+            {result.detector.detections.map((d,i) => {
+              const width = result.detector!.width!;
+              const height = result.detector!.height!;
+              const size = Math.min(width * 0.035, height * 0.06);
+              const labelWidth = size * (i >= 9 ? 1.45 : 1);
+              const x = Math.max(0, Math.min(d.box[0], width - labelWidth));
+              const y = Math.max(0, Math.min(d.box[1], height - size));
+              return <g key={i}><rect x={x} y={y} width={labelWidth} height={size} rx={size * 0.16} fill="#102719" stroke="#a5f36c" strokeWidth={size * 0.06}/><text x={x + labelWidth / 2} y={y + size / 2} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={size * 0.7} fontWeight="700">{i + 1}</text></g>;
+            })}
+          </svg>
+        </div>}
         <ul className="mt-3 space-y-1 text-sm">{result.detector.detections.map((d,i) => <li key={i}><Localized id="ui_779089b3f7575162" fallback="Fruit" />{" "}{i+1}: {d.label.replace(/_/g," ")}{" "}<Localized id="ui_6855d3ce8a647bab" fallback="· model score" />{" "}{(d.confidence*100).toFixed(0)}%{d.uncertain ? " · uncertain" : ""}{d.raw_label !== d.label ? " · rotten check disagreed" : ""}</li>)}</ul>
         {result.disagreement && <p className="mt-2 text-sm text-amber-600">{result.disagreement}</p>}
       </Panel>}
