@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAlerts } from "@/hooks/use-alerts";
 import { NAV } from "@/lib/nav";
+import { prefetchScene } from "@/lib/prefetch";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { StatusPill } from "./status-pill";
@@ -47,6 +48,8 @@ export function Navbar() {
               <li key={n.href}>
                 <Link
                   href={n.href}
+                  onMouseEnter={() => prefetchScene(n.href)}
+                  onFocus={() => prefetchScene(n.href)}
                   className={cn(
                     "relative rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors",
                     active ? "text-foreground" : "text-muted-foreground hover:text-foreground",

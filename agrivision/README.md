@@ -4,19 +4,39 @@ The initial 3D interface was adapted from [munibraza/ubhackingai26](https://gith
 
 A futuristic 3D smart-agriculture web application for FolLand: an interactive tomato-farm digital twin, IoT sensor dashboard, photo-based crop analysis, weather intelligence, a 3D growth timeline and configurable smart alerts.
 
-Built with Next.js 15 (App Router), React 18, TypeScript, Three.js + React Three Fiber + drei, Tailwind CSS, shadcn/ui-style components (Radix), Framer Motion, Recharts and Lucide.
+Built with Next.js 15 (App Router), React 19, TypeScript, Three.js + React Three Fiber + drei, Tailwind CSS, shadcn/ui-style components (Radix), Framer Motion, Recharts and Lucide.
 
 ## Run it
 
-Requirements: Node.js 20 or newer.
+Requirements: Node.js 20 or newer (22 LTS recommended).
+
+**One command (recommended).** Installs dependencies if needed, rebuilds only when the code changed, picks a free port and starts the fast production server:
+
+| System | Command |
+|---|---|
+| Windows | double-click `start.bat` (or run `npm run serve` in PowerShell) |
+| macOS / Linux | `./start.sh` (or `npm run serve`) |
+
+It prints the local address (`http://localhost:3000`) and the address to open on a phone on the same Wi-Fi. Options: `--port 4000`, `--rebuild`, and `--dev` for the hot-reloading development server (`start-dev.bat` on Windows).
+
+**Manual commands:**
 
 ```bash
 cd agrivision
 npm ci
-FOLLAND_API_URL=http://127.0.0.1:8001 npm run dev -- -p 3001
+npm run dev        # development, Turbopack (fast compile, hot reload)
+npm run preview    # production build + start (fastest at runtime)
 ```
 
-Open http://localhost:3001. For a production build: `npm run build && npm start`.
+`npm run dev:webpack` is kept as a fallback if Turbopack ever misbehaves.
+
+To point the app at a backend on another port, set `FOLLAND_API_URL` **before building** (Next.js bakes proxy rules into the build; `npm run serve` rebuilds automatically when this value changes):
+
+```bash
+FOLLAND_API_URL=http://127.0.0.1:8001 npm run serve
+```
+
+On Windows PowerShell: `$env:FOLLAND_API_URL="http://127.0.0.1:8001"; npm run serve`.
 
 The app works on its own in **Demo Mode**. No hardware, API key or backend is needed.
 
@@ -66,4 +86,24 @@ src/
 
 ## Performance
 
-Plants, leaves, fruit, grass, trees and rain are instanced, so all 48 plants draw in a handful of calls. Scenes load lazily, pause when off screen, and adapt pixel ratio to frame rate. Small or low-power devices get a lite tier (fewer leaves, no shadows or grass), and browsers without WebGL get a static illustration. The tier can be forced on the Smart Farm page.
+Rendering:
+
+- **Instancing everywhere.** Plants, leaves, fruit, grass, trees, clouds and rain are instanced, so the 48-plant farm draws in a handful of calls.
+- **GPU animation.** Wind sway, cloud drift and rainfall run in vertex shaders. Instance buffers are uploaded once; per frame the CPU writes only a few uniforms. Shadows use matching depth shaders, so they sway with the leaves.
+- **Cheaper shadows.** The shadow map refreshes every other frame (the sun and clouds move slowly), objects outside the shadow area don't cast, and the growth scene's contact shadow redraws only when the plant changes.
+- **No first-frame stall.** Shaders are compiled asynchronously (`compileAsync`) before the loading screen fades.
+- **Stable memory.** Geometry and textures are built once per session and shared between scenes. The growth slider reuses instance buffers instead of remounting meshes. No objects are allocated per frame.
+- **Fewer re-renders.** Scene parts are memoized, so the sensor feed (one reading every few seconds) doesn't re-render plants, ground or sky.
+- **Adaptive.** Scenes pause off screen, lower the pixel ratio when frame rate drops, and use a lite tier on small or low-power devices. Browsers without WebGL get a static illustration. The tier can be forced on the Smart Farm page.
+
+Loading:
+
+- Recharts loads as a separate chunk after the page paints, and the trend sparklines are plain SVG. This cut first-load JavaScript by about 40% on Home, Dashboard and Weather.
+- The 3D chunks are prefetched when the browser is idle and on hover over the Smart Farm and Growth links.
+- `npm run dev` uses Turbopack, roughly 2× faster for the first compile and about 5× faster for each later page than webpack dev.
+
+Reliability:
+
+- A crash inside a 3D scene shows the static preview with a **Retry** button instead of breaking the page.
+- A lost WebGL context (GPU reset, sleep, too many tabs) remounts the scene automatically.
+- `npm run serve` checks the Node version, repairs missing dependencies, avoids port conflicts and skips unnecessary rebuilds.

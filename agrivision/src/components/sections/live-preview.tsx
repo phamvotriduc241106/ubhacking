@@ -3,7 +3,7 @@
 import { Droplets, Sun, Thermometer } from "lucide-react";
 import Link from "next/link";
 import { CHART_COLORS } from "@/components/charts/chart-theme";
-import { SensorChart } from "@/components/charts/sensor-chart";
+import { LazySensorChart } from "@/components/charts/lazy-sensor-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { OriginBadge } from "@/components/shared/origin-badge";
 import { Reveal } from "@/components/shared/reveal";
@@ -37,7 +37,7 @@ export function LivePreview() {
         <MetricCard icon={Sun} label="Light Intensity" value={latest?.lightLux ?? null} unit="lux" format={formatLux} color={CHART_COLORS.light} trend={trend("lightLux")} index={2} />
       </div>
       <Reveal className="glass mt-4 rounded-3xl p-5 sm:p-6">
-        <SensorChart history={history} height={260} />
+        <LazySensorChart history={history} height={260} />
       </Reveal>
     </section>
   );

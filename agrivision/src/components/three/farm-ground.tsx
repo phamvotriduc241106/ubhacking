@@ -1,12 +1,12 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { BEDS_PER_ZONE, ZONES } from "@/lib/farm";
 import type { WeatherCondition } from "@/lib/types";
 import { mulberry32 } from "@/lib/utils";
-import { createNoiseTexture } from "./geometries";
+import { getNoiseTexture } from "./geometries";
 import type { PlantInput } from "./plant-field";
 
 const BED_LEN = 6.6;
@@ -117,11 +117,11 @@ function Trees({ count }: { count: number }) {
   useInstances(crowns, cm, [cm]);
   return (
     <>
-      <instancedMesh ref={trunks} args={[undefined, undefined, count]} castShadow>
+      <instancedMesh ref={trunks} args={[undefined, undefined, count]}>
         <cylinderGeometry args={[0.08, 0.13, 1.6, 6]} />
         <meshStandardMaterial color="#5b4330" roughness={1} />
       </instancedMesh>
-      <instancedMesh ref={crowns} args={[undefined, undefined, count]} castShadow>
+      <instancedMesh ref={crowns} args={[undefined, undefined, count]}>
         <icosahedronGeometry args={[1, 1]} />
         <meshStandardMaterial color="#2f6a35" roughness={0.95} flatShading />
       </instancedMesh>
@@ -133,24 +133,23 @@ function Trees({ count }: { count: number }) {
 
 function Droplets({ plants, active }: { plants: PlantInput[]; active: boolean }) {
   const ref = useRef<THREE.InstancedMesh>(null);
-  const m = useMemo(() => new THREE.Matrix4(), []);
+  const scratch = useMemo(() => ({ m: new THREE.Matrix4(), v: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3() }), []);
   const level = useRef(active ? 1 : 0);
   const offsets = useMemo(() => plants.map((p) => (p.seed % 997) / 997), [plants]);
   useFrame(({ clock }, dt) => {
     const mesh = ref.current;
     if (!mesh) return;
     level.current = THREE.MathUtils.damp(level.current, active ? 1 : 0, 2, dt);
+    mesh.visible = level.current > 0.01;
+    if (!mesh.visible) return;
     const t = clock.elapsedTime;
-    plants.forEach((p, i) => {
+    const { m, v, q, s } = scratch;
+    for (let i = 0; i < plants.length; i++) {
+      const p = plants[i].position;
       const phase = (t * 0.9 + offsets[i]) % 1;
-      const s = 0.022 * level.current * (1 - phase * 0.6);
-      m.compose(
-        new THREE.Vector3(p.position[0] + 0.16, 0.24 - phase * 0.1, p.position[2] + 0.18),
-        new THREE.Quaternion(),
-        new THREE.Vector3(s, s * 1.4, s),
-      );
-      mesh.setMatrixAt(i, m);
-    });
+      const k = 0.022 * level.current * (1 - phase * 0.6);
+      mesh.setMatrixAt(i, m.compose(v.set(p[0] + 0.16, 0.24 - phase * 0.1, p[2] + 0.18), q, s.set(k, k * 1.4, k)));
+    }
     mesh.instanceMatrix.needsUpdate = true;
   });
   return (
@@ -170,25 +169,27 @@ interface GroundProps {
   wind: number;
 }
 
-export function FarmGround({ plants, condition, quality, wind }: GroundProps) {
+function FarmGroundImpl({ plants, condition, quality, wind }: GroundProps) {
   const high = quality === "high";
-  const tex = useMemo(() => {
-    const grass = createNoiseTexture([74, 120, 52], 34, 256, 0.08, 1);
-    grass.repeat.set(14, 14);
-    const soil = createNoiseTexture([78, 56, 38], 40, 128, 0.12, 2);
-    soil.repeat.set(5, 0.7);
-    const gravel = createNoiseTexture([196, 184, 152], 46, 128, 0.2, 3);
-    gravel.repeat.set(10, 0.8);
-    return { grass, soil, gravel };
-  }, []);
+  const tex = useMemo(
+    () => ({
+      grass: getNoiseTexture([74, 120, 52], 34, 256, 0.08, 1, [14, 14]),
+      soil: getNoiseTexture([78, 56, 38], 40, 128, 0.12, 2, [5, 0.7]),
+      gravel: getNoiseTexture([196, 184, 152], 46, 128, 0.2, 3, [10, 0.8]),
+    }),
+    [],
+  );
 
   const wet = condition === "rainy";
   const soilMat = useMemo(() => new THREE.MeshStandardMaterial({ map: tex.soil, roughness: 0.95 }), [tex]);
   const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ map: tex.grass, roughness: 1 }), [tex]);
+  const wetColor = useMemo(() => ({ wet: new THREE.Color("#9a8e86"), dry: new THREE.Color("#ffffff") }), []);
   useFrame((_, dt) => {
+    const targetRough = wet ? 0.45 : 0.95;
+    if (Math.abs(soilMat.roughness - targetRough) < 0.002) return;
     const k = Math.min(1, dt * 1.2);
-    soilMat.roughness = THREE.MathUtils.lerp(soilMat.roughness, wet ? 0.45 : 0.95, k);
-    soilMat.color.lerp(new THREE.Color(wet ? "#9a8e86" : "#ffffff"), k);
+    soilMat.roughness = THREE.MathUtils.lerp(soilMat.roughness, targetRough, k);
+    soilMat.color.lerp(wet ? wetColor.wet : wetColor.dry, k);
     groundMat.roughness = THREE.MathUtils.lerp(groundMat.roughness, wet ? 0.7 : 1, k);
   });
 
@@ -292,3 +293,6 @@ export function FarmGround({ plants, condition, quality, wind }: GroundProps) {
     </group>
   );
 }
+
+/** Memoized: sensor ticks re-render the scene but never change the ground. */
+export const FarmGround = memo(FarmGroundImpl);

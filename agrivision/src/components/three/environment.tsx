@@ -2,7 +2,7 @@
 
 import { Environment, Lightformer, Sky, Sparkles } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { WeatherCondition } from "@/lib/types";
 import { mulberry32 } from "@/lib/utils";
@@ -43,97 +43,175 @@ const tmpColor = new THREE.Color();
 const CLOUDS = 16;
 const PUFFS = 7;
 
-function Clouds({ look, shadows }: { look: React.MutableRefObject<Look>; shadows: boolean }) {
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1, transparent: true, opacity: 0.94 }), []);
-  const geo = useMemo(() => new THREE.IcosahedronGeometry(1, 2), []);
-  const layout = useMemo(() => {
-    const r = mulberry32(42);
-    return Array.from({ length: CLOUDS }, (_, i) => ({
-      x: (r() - 0.5) * 60,
-      z: (r() - 0.5) * 34 - 4,
-      y: 10 + r() * 3,
-      speed: 0.35 + r() * 0.35,
-      size: 1.1 + r() * 1.1,
-      order: i,
-      puffs: Array.from({ length: PUFFS }, (_, k) => ({
-        dx: (k - PUFFS / 2) * 0.9 + (r() - 0.5) * 0.6,
-        dy: (r() - 0.3) * 0.6,
-        dz: (r() - 0.5) * 1.4,
-        s: 0.8 + r() * 0.9 - Math.abs(k - PUFFS / 2) * 0.12,
-      })),
-    }));
-  }, []);
-  const coverage = useRef(look.current.coverage);
-  const m = useMemo(() => new THREE.Matrix4(), []);
-  const v = useMemo(() => new THREE.Vector3(), []);
-  const q = useMemo(() => new THREE.Quaternion(), []);
-  const s = useMemo(() => new THREE.Vector3(), []);
+/**
+ * Clouds drift and fade entirely on the GPU. Each puff instance stores its offset from the
+ * cloud center in the instance matrix; aCloud = (startX, y, z, speed), aOrder = cloud index.
+ * Coverage (how many clouds are visible) is a uniform eased on the CPU — one write per frame.
+ */
+const CLOUD_HEADER = /* glsl */ `
+attribute vec4 aCloud;
+attribute float aOrder;
+uniform float uTime;
+uniform float uCoverage;
+vec3 cloudPlace(vec3 local) {
+  float vis = clamp(uCoverage * ${CLOUDS}.0 - aOrder, 0.0, 1.0);
+  float x = mod(aCloud.x + uTime * aCloud.w + 30.0, 60.0) - 30.0;
+  return vec3(x, aCloud.y, aCloud.z) + local * vis;
+}
+`;
 
-  useFrame(({ clock }, dt) => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    coverage.current = THREE.MathUtils.damp(coverage.current, look.current.coverage, 1.2, dt);
-    mat.color.lerp(tmpColor.set(look.current.cloud), Math.min(1, dt * 1.5));
-    const t = clock.elapsedTime;
+function patchCloud(material: THREE.Material, uniforms: { uTime: THREE.IUniform<number>; uCoverage: THREE.IUniform<number> }) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = uniforms.uTime;
+    shader.uniforms.uCoverage = uniforms.uCoverage;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", `#include <common>\n${CLOUD_HEADER}`)
+      .replace(
+        "#include <project_vertex>",
+        THREE.ShaderChunk.project_vertex.replace("mvPosition = instanceMatrix * mvPosition;", "mvPosition = instanceMatrix * mvPosition;\n\tmvPosition.xyz = cloudPlace( mvPosition.xyz );"),
+      )
+      .replace(
+        "#include <worldpos_vertex>",
+        THREE.ShaderChunk.worldpos_vertex.replace("worldPosition = instanceMatrix * worldPosition;", "worldPosition = instanceMatrix * worldPosition;\n\t\tworldPosition.xyz = cloudPlace( worldPosition.xyz );"),
+      );
+  };
+  material.customProgramCacheKey = () => "cloud-v1";
+  return material;
+}
+
+function Clouds({ look, shadows }: { look: React.MutableRefObject<Look>; shadows: boolean }) {
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uCoverage: { value: look.current.coverage } }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const mat = useMemo(
+    () => patchCloud(new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1, transparent: true, opacity: 0.94 }), uniforms) as THREE.MeshStandardMaterial,
+    [uniforms],
+  );
+  const depthMat = useMemo(() => patchCloud(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), uniforms), [uniforms]);
+  const geo = useMemo(() => {
+    const r = mulberry32(42);
+    const g = new THREE.IcosahedronGeometry(1, 2);
+    const aCloud = new Float32Array(CLOUDS * PUFFS * 4);
+    const aOrder = new Float32Array(CLOUDS * PUFFS);
+    const matrices: THREE.Matrix4[] = [];
     let i = 0;
-    for (const c of layout) {
-      const visible = THREE.MathUtils.clamp(coverage.current * CLOUDS - c.order, 0, 1);
-      const x = ((c.x + t * c.speed + 30) % 60) - 30;
-      for (const p of c.puffs) {
-        const k = c.size * p.s * visible;
-        v.set(x + p.dx * c.size, c.y + p.dy * c.size, c.z + p.dz * c.size);
-        s.set(k * 1.15, k * 0.72, k);
-        mesh.setMatrixAt(i++, m.compose(v, q, s));
+    for (let c = 0; c < CLOUDS; c++) {
+      const x = (r() - 0.5) * 60;
+      const z = (r() - 0.5) * 34 - 4;
+      const y = 10 + r() * 3;
+      const speed = 0.35 + r() * 0.35;
+      const size = 1.1 + r() * 1.1;
+      for (let k = 0; k < PUFFS; k++) {
+        const dx = (k - PUFFS / 2) * 0.9 + (r() - 0.5) * 0.6;
+        const dy = (r() - 0.3) * 0.6;
+        const dz = (r() - 0.5) * 1.4;
+        const ps = (0.8 + r() * 0.9 - Math.abs(k - PUFFS / 2) * 0.12) * size;
+        matrices.push(new THREE.Matrix4().compose(new THREE.Vector3(dx * size, dy * size, dz * size), new THREE.Quaternion(), new THREE.Vector3(ps * 1.15, ps * 0.72, ps)));
+        aCloud.set([x, y, z, speed], i * 4);
+        aOrder[i] = c;
+        i++;
       }
     }
+    g.setAttribute("aCloud", new THREE.InstancedBufferAttribute(aCloud, 4));
+    g.setAttribute("aOrder", new THREE.InstancedBufferAttribute(aOrder, 1));
+    return { g, matrices };
+  }, []);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    geo.matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
     mesh.instanceMatrix.needsUpdate = true;
+  }, [geo]);
+  useEffect(() => () => {
+    geo.g.dispose();
+    mat.dispose();
+    depthMat.dispose();
+  }, [geo, mat, depthMat]);
+
+  useFrame(({ clock }, dt) => {
+    uniforms.uTime.value = clock.elapsedTime;
+    uniforms.uCoverage.value = THREE.MathUtils.damp(uniforms.uCoverage.value, look.current.coverage, 1.2, dt);
+    mat.color.lerp(tmpColor.set(look.current.cloud), Math.min(1, dt * 1.5));
   });
 
-  return <instancedMesh ref={ref} args={[geo, mat, CLOUDS * PUFFS]} castShadow={shadows} frustumCulled={false} />;
+  return <instancedMesh ref={ref} args={[geo.g, mat, CLOUDS * PUFFS]} castShadow={shadows} customDepthMaterial={depthMat} frustumCulled={false} />;
 }
 
 /* ------------------------------ Rain ------------------------------ */
 
+/** Rain streaks fall in the vertex shader; the buffer is uploaded once and never touched again. */
 function Rain({ look, count }: { look: React.MutableRefObject<Look>; count: number }) {
   const ref = useRef<THREE.LineSegments>(null);
   const amount = useRef(look.current.rain);
-  const { geo, pos, speed } = useMemo(() => {
+  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+  const geo = useMemo(() => {
     const r = mulberry32(9);
     const pos = new Float32Array(count * 6);
-    const speed = new Float32Array(count);
+    const speed = new Float32Array(count * 2);
+    const top = new Float32Array(count * 2);
     for (let i = 0; i < count; i++) {
       const x = (r() - 0.5) * 34;
       const y = r() * 14;
       const z = (r() - 0.5) * 34;
-      pos.set([x, y, z, x + 0.03, y + 0.35, z], i * 6);
-      speed[i] = 11 + r() * 6;
+      pos.set([x, y, z, x, y, z], i * 6);
+      const sp = 11 + r() * 6;
+      speed[i * 2] = speed[i * 2 + 1] = sp;
+      top[i * 2 + 1] = 1;
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    return { geo, pos, speed };
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setAttribute("aSpeed", new THREE.BufferAttribute(speed, 1));
+    g.setAttribute("aTop", new THREE.BufferAttribute(top, 1));
+    return g;
   }, [count]);
-  const mat = useMemo(() => new THREE.LineBasicMaterial({ color: "#d6e2ea", transparent: true, opacity: 0, depthWrite: false }), []);
+  const mat = useMemo(() => {
+    const m = new THREE.LineBasicMaterial({ color: "#d6e2ea", transparent: true, opacity: 0, depthWrite: false });
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = uniforms.uTime;
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute float aSpeed;\nattribute float aTop;\nuniform float uTime;")
+        .replace(
+          "#include <begin_vertex>",
+          "#include <begin_vertex>\ntransformed.y = mod(position.y - uTime * aSpeed, 14.0) + aTop * 0.35;\ntransformed.x += aTop * 0.03;",
+        );
+    };
+    m.customProgramCacheKey = () => "rain-v1";
+    return m;
+  }, [uniforms]);
+  useEffect(() => () => {
+    geo.dispose();
+    mat.dispose();
+  }, [geo, mat]);
 
-  useFrame((_, dt) => {
+  useFrame(({ clock }, dt) => {
     amount.current = THREE.MathUtils.damp(amount.current, look.current.rain, 1.5, dt);
     mat.opacity = amount.current * 0.55;
-    const line = ref.current;
-    if (!line) return;
-    line.visible = amount.current > 0.02;
-    if (!line.visible) return;
-    const step = Math.min(dt, 0.05);
-    for (let i = 0; i < count; i++) {
-      const o = i * 6;
-      let y = pos[o + 1] - speed[i] * step;
-      if (y < 0) y += 14;
-      pos[o + 1] = y;
-      pos[o + 4] = y + 0.35;
-    }
-    geo.attributes.position.needsUpdate = true;
+    uniforms.uTime.value = clock.elapsedTime;
+    if (ref.current) ref.current.visible = amount.current > 0.02;
   });
 
   return <lineSegments ref={ref} geometry={geo} material={mat} frustumCulled={false} />;
+}
+
+/* ------------------------- Shadow scheduling ------------------------- */
+
+/**
+ * The shadow pass re-renders every caster. Sun, clouds and sway move slowly, so refreshing
+ * the shadow map every other frame is visually identical and saves a full depth pass per frame.
+ */
+function ShadowScheduler({ every = 2 }: { every?: number }) {
+  const { gl } = useThree();
+  const frame = useRef(0);
+  useEffect(() => {
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
+    return () => {
+      gl.shadowMap.autoUpdate = true;
+    };
+  }, [gl]);
+  useFrame(() => {
+    if (frame.current++ % every === 0) gl.shadowMap.needsUpdate = true;
+  });
+  return null;
 }
 
 /* --------------------------- Environment --------------------------- */
@@ -145,7 +223,7 @@ interface EnvProps {
   animateSun?: boolean;
 }
 
-export function FarmEnvironment({ condition, timeOfDay, quality, animateSun = true }: EnvProps) {
+function FarmEnvironmentImpl({ condition, timeOfDay, quality, animateSun = true }: EnvProps) {
   const { scene } = useThree();
   const target = LOOKS[timeOfDay][condition];
   const look = useRef<Look>(target);
@@ -222,6 +300,7 @@ export function FarmEnvironment({ condition, timeOfDay, quality, animateSun = tr
           mieDirectionalG={0.85}
         />
       )}
+      {high && <ShadowScheduler />}
       <Clouds look={look} shadows={high} />
       <Rain look={look} count={high ? 1800 : 600} />
       {high && condition !== "rainy" && (
@@ -236,3 +315,6 @@ export function FarmEnvironment({ condition, timeOfDay, quality, animateSun = tr
     </>
   );
 }
+
+/** Memoized so sensor ticks do not re-render lights, sky, clouds and rain. */
+export const FarmEnvironment = memo(FarmEnvironmentImpl);

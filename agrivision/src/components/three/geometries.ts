@@ -139,3 +139,56 @@ export function createNoiseTexture(
   tex.anisotropy = 4;
   return tex;
 }
+
+/* ---------------------------- Shared caches ---------------------------- */
+
+export interface PlantGeometries {
+  leaf: THREE.BufferGeometry;
+  stem: THREE.BufferGeometry;
+  fruit: THREE.BufferGeometry;
+  star: THREE.BufferGeometry;
+  flower: THREE.BufferGeometry;
+  hit: THREE.BufferGeometry;
+}
+
+let plantGeometries: PlantGeometries | null = null;
+
+/**
+ * Base plant geometries are built once per page session and shared by every scene
+ * (hero, digital twin, growth timeline). Instanced meshes clone them cheaply to attach
+ * their own per-instance attributes, so the expensive leaf merge never repeats.
+ */
+export function getPlantGeometries(): PlantGeometries {
+  plantGeometries ??= {
+    leaf: createCompoundLeafGeometry(),
+    stem: createStemGeometry(),
+    fruit: createFruitGeometry(),
+    star: createStarGeometry(5, 1, 0.38),
+    flower: createStarGeometry(5, 1, 0.45),
+    hit: new THREE.CylinderGeometry(1, 1, 1, 8).translate(0, 0.5, 0),
+  };
+  return plantGeometries;
+}
+
+const textureCache = new Map<string, THREE.CanvasTexture>();
+
+/** Cached noise texture; callers get their own clone so they can set repeat independently. */
+export function getNoiseTexture(
+  base: [number, number, number],
+  variance: number,
+  size: number,
+  speckle: number,
+  seed: number,
+  repeat: [number, number],
+) {
+  const key = `${base.join(",")}|${variance}|${size}|${speckle}|${seed}`;
+  let tex = textureCache.get(key);
+  if (!tex) {
+    tex = createNoiseTexture(base, variance, size, speckle, seed);
+    textureCache.set(key, tex);
+  }
+  const t = tex.clone();
+  t.repeat.set(repeat[0], repeat[1]);
+  t.needsUpdate = true;
+  return t;
+}

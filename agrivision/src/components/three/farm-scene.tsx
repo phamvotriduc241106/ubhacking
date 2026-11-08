@@ -3,7 +3,7 @@
 import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { HEALTH_META, RIPENESS_META, SENSOR_NODES, WEATHER_STATION_POS, ZONES } from "@/lib/farm";
@@ -155,6 +155,10 @@ export function FarmScene(props: FarmSceneProps) {
     onSelectSensor,
   } = props;
   const [hovered, setHovered] = useState<string | null>(null);
+  // Stable handler (via a ref) so the memoized PlantField is not re-rendered on every sensor tick.
+  const selectRef = useRef(onSelectPlant);
+  selectRef.current = onSelectPlant;
+  const handleSelect = useCallback((id: string) => selectRef.current?.(id), []);
   const [heroSpot, setHeroSpot] = useState<string | null>(null);
   const high = quality === "high";
   const wind = reducedMotion ? 0 : WIND[condition];
@@ -208,7 +212,7 @@ export function FarmScene(props: FarmSceneProps) {
         detail={high ? 1 : 0.6}
         wind={wind}
         shadows={high}
-        onSelect={variant === "twin" ? (id) => onSelectPlant?.(id) : undefined}
+        onSelect={variant === "twin" ? handleSelect : undefined}
         onHover={setHovered}
       />
       <HealthRings plants={plants} visible={healthOverlay} selectedId={variant === "twin" ? selectedPlantId : null} hoveredId={hovered} selectedZone={selectedZone} />
