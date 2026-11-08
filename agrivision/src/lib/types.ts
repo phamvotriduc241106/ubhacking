@@ -111,6 +111,8 @@ export interface WeatherData {
   latitude: number;
   longitude: number;
   fetchedAt: number;
+  /** Offset of the location's local time from UTC. Daily dates and hourly times are in local time. */
+  utcOffsetSeconds: number;
   current: { temp: number; humidity: number; code: number; wind: number };
   days: WeatherDay[];
   hours: WeatherHour[];

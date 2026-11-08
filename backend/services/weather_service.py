@@ -3,9 +3,20 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from backend.models import WeatherSummary
 
-# In-memory cache to avoid excessive external API requests
+# In-memory cache to avoid excessive external API requests.
+# Keys come from user-supplied query values, so the cache must stay bounded:
+# expired entries are pruned and the oldest entries are evicted past the cap.
 _cache: Dict[str, Any] = {}
 _CACHE_TTL_SECONDS = 900  # 15 minutes
+_CACHE_MAX_ENTRIES = 256
+
+
+def _cache_put(key: str, entry: Dict[str, Any], now_ts: float) -> None:
+    for k in [k for k, v in _cache.items() if now_ts - v["timestamp"] >= _CACHE_TTL_SECONDS]:
+        del _cache[k]
+    while len(_cache) >= _CACHE_MAX_ENTRIES:
+        del _cache[next(iter(_cache))]  # dicts keep insertion order: drop the oldest
+    _cache[key] = entry
 
 
 class WeatherService:
@@ -40,6 +51,9 @@ class WeatherService:
             "longitude": lon,
             "current": "temperature_2m,relative_humidity_2m,weather_code",
             "daily": "precipitation_sum,temperature_2m_max,temperature_2m_min",
+            # The first 7 daily values are the 7 completed days before today, so the
+            # 7-day total describes observed rain, not forecast rain.
+            "past_days": 7,
             "timezone": "auto"
         }
 
@@ -51,10 +65,9 @@ class WeatherService:
                     current = data.get("current", {})
                     daily = data.get("daily", {})
 
-                    precip_daily = daily.get("precipitation_sum", [])
-                    rain_last = round(precip_daily[0], 1) if len(precip_daily) > 0 and precip_daily[0] is not None else 0.0
-                    rain_next = round(precip_daily[1], 1) if len(precip_daily) > 1 and precip_daily[1] is not None else 0.0
-                    rain_7d = round(sum(p for p in precip_daily if p is not None), 1) if precip_daily else 0.0
+                    precip_daily = daily.get("precipitation_sum", []) or []
+                    past_week = [p for p in precip_daily[:7] if p is not None]
+                    rain_7d = round(sum(past_week), 1) if len(precip_daily) >= 7 and past_week else None
 
                     summary = WeatherSummary(
                         location_name=name,
@@ -71,7 +84,7 @@ class WeatherService:
                         is_fallback=False
                     )
 
-                    _cache[cache_key] = {"timestamp": now.timestamp(), "data": summary}
+                    _cache_put(cache_key, {"timestamp": now.timestamp(), "data": summary}, now.timestamp())
                     return summary
         except Exception:
             pass
@@ -96,7 +109,7 @@ class WeatherService:
     @staticmethod
     def _interpret_weather_code(code: Optional[int]) -> str:
         if code is None:
-            return "Clear/Fair"
+            return "Conditions unavailable"
         mapping = {
             0: "Clear sky",
             1: "Mainly clear",

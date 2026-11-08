@@ -24,7 +24,7 @@ class WeatherSummary(BaseModel):
     relative_humidity_pct: Optional[float] = 58.0
     rain_last_24h_mm: Optional[float] = 1.2
     rain_next_24h_mm: Optional[float] = 0.4
-    precipitation_sum_7d_mm: Optional[float] = 6.8
+    precipitation_sum_7d_mm: Optional[float] = Field(6.8, description="Total rain over the 7 completed days before today (mm), not a forecast.")
     weather_description: Optional[str] = "Partly cloudy"
     source: str = "open-meteo"
     retrieved_at_utc: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

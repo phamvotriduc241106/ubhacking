@@ -186,10 +186,13 @@ async def analyze_plant(
 
     # If Gemini analyzed the image, its automated foliage detection takes precedence over manual user selection
     effective_leaf_symptoms = leaf_symptoms
+    leaf_symptoms_source = "user"
     if visual_obs.ai_provider == "gemini-2.5-flash" and visual_obs.detected_leaf_symptoms:
         effective_leaf_symptoms = visual_obs.detected_leaf_symptoms
+        leaf_symptoms_source = "simulated" if visual_obs.is_simulated else "ai"
     elif (not leaf_symptoms or leaf_symptoms == "none") and visual_obs.detected_leaf_symptoms:
         effective_leaf_symptoms = visual_obs.detected_leaf_symptoms
+        leaf_symptoms_source = "simulated" if visual_obs.is_simulated else "ai"
 
     # If Gemini identified the plant, enrich variety or crop context if not set
     effective_variety = variety
@@ -205,7 +208,8 @@ async def analyze_plant(
         leaf_symptoms=effective_leaf_symptoms,
         visual=visual_obs,
         sensors=sensor_data,
-        weather=weather_data
+        weather=weather_data,
+        leaf_symptoms_source=leaf_symptoms_source,
     )
 
     if detector.status == 'ok' and detector.detections:

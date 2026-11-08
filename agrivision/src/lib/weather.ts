@@ -32,6 +32,21 @@ export function describeCode(code: number): { label: string; kind: "sun" | "part
   return { label: "Unknown", kind: "cloud" };
 }
 
+/**
+ * "Today" and "this hour" in the weather location's own local time, formatted like
+ * Open-Meteo's daily dates (YYYY-MM-DD) and hourly times (YYYY-MM-DDTHH).
+ * Comparing against new Date().toISOString() (UTC) shifts the forecast by the UTC offset.
+ */
+export function locationNow(w: Pick<WeatherData, "utcOffsetSeconds">, offsetMs = 0) {
+  const t = new Date(Date.now() + offsetMs + w.utcOffsetSeconds * 1000).toISOString();
+  return { date: t.slice(0, 10), hour: t.slice(0, 13) };
+}
+
+/** Browser-local YYYY-MM-DD / YYYY-MM-DDTHH:MM, used for the simulated fallback. */
+const pad = (n: number) => String(n).padStart(2, "0");
+const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localMinute = (d: Date) => `${localDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
 export async function fetchWeather(loc: Location, signal?: AbortSignal): Promise<WeatherData> {
   const params = new URLSearchParams({
     latitude: String(loc.latitude),
@@ -46,7 +61,8 @@ export async function fetchWeather(loc: Location, signal?: AbortSignal): Promise
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal });
   if (!res.ok) throw new Error(`Open-Meteo returned ${res.status}`);
   const j = await res.json();
-  const today = new Date().toISOString().slice(0, 10);
+  const utcOffsetSeconds: number = typeof j.utc_offset_seconds === "number" ? j.utc_offset_seconds : 0;
+  const today = locationNow({ utcOffsetSeconds }).date;
   const days: WeatherDay[] = j.daily.time.map((d: string, i: number) => ({
     date: d,
     tMax: j.daily.temperature_2m_max[i],
@@ -68,6 +84,7 @@ export async function fetchWeather(loc: Location, signal?: AbortSignal): Promise
     latitude: loc.latitude,
     longitude: loc.longitude,
     fetchedAt: Date.now(),
+    utcOffsetSeconds,
     current: {
       temp: j.current.temperature_2m,
       humidity: j.current.relative_humidity_2m,
@@ -90,7 +107,7 @@ export function simulateWeather(loc: Location): WeatherData {
     const wet = rand() < 0.28;
     const base = 24 + Math.sin(i / 4) * 3;
     days.push({
-      date: d.toISOString().slice(0, 10),
+      date: localDate(d),
       tMax: +(base + rand() * 3 - (wet ? 3 : 0)).toFixed(1),
       tMin: +(base - 9 + rand() * 2).toFixed(1),
       humidity: Math.round(58 + rand() * 12 + (wet ? 18 : 0)),
@@ -105,7 +122,7 @@ export function simulateWeather(loc: Location): WeatherData {
     const hod = t.getHours();
     const phase = Math.sin(((hod - 9) / 24) * Math.PI * 2);
     hours.push({
-      time: t.toISOString().slice(0, 16),
+      time: localMinute(t),
       temp: +(19 + 6 * phase + rand()).toFixed(1),
       humidity: Math.round(68 - 16 * phase + rand() * 4),
       precipitation: rand() < 0.04 ? +(rand() * 2).toFixed(1) : 0,
@@ -118,6 +135,8 @@ export function simulateWeather(loc: Location): WeatherData {
     latitude: loc.latitude,
     longitude: loc.longitude,
     fetchedAt: Date.now(),
+    // The simulation is generated in the browser's local time.
+    utcOffsetSeconds: -new Date().getTimezoneOffset() * 60,
     current: { temp: days[todayIdx].tMax - 2, humidity: days[todayIdx].humidity, code: days[todayIdx].code, wind: 9 },
     days,
     hours,
