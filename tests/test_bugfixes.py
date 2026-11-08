@@ -142,3 +142,29 @@ def test_demo_upload_read_is_bounded():
     # The server must never ask for the whole (unbounded) stream.
     assert -1 not in raw.requested and None not in raw.requested
     assert max(raw.requested) <= MAX_FILE_SIZE_BYTES + 1
+
+
+def test_detector_reports_missing_weights_or_libraries_instead_of_failing(tmp_path, monkeypatch):
+    from PIL import Image
+    from backend.services import tomato_detector
+
+    buf = BytesIO()
+    Image.new("RGB", (64, 48), (200, 40, 30)).save(buf, format="JPEG")
+    # Fresh clone: no weights downloaded.
+    monkeypatch.setattr(tomato_detector, "MODEL_DIR", tmp_path)
+    result = tomato_detector.infer_image(buf.getvalue())
+    assert result["status"] == "unavailable"
+    assert "download_models" in result["message"]
+    assert (result["width"], result["height"]) == (64, 48)
+
+    # Weights present but ML libraries not installed.
+    for name in ("detector_yolo26s_best.pt", "ripeness_yolo26s-cls_best.pt", "rotten_check.npz"):
+        (tmp_path / name).write_bytes(b"x")
+
+    def missing():
+        raise ImportError("No module named 'ultralytics'")
+
+    monkeypatch.setattr(tomato_detector, "load_models", missing)
+    result = tomato_detector.infer_image(buf.getvalue())
+    assert result["status"] == "unavailable"
+    assert "pip install" in result["message"]

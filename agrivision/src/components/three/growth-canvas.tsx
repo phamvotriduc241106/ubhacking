@@ -99,7 +99,7 @@ export default function GrowthCanvas({ growth }: { growth: number }) {
 
   return (
     <div className="relative h-full w-full">
-      <SceneBoundary onRetry={remount}>
+      <SceneBoundary onRetry={remount} onError={onReady}>
       <Canvas
         key={generation}
         shadows={high}

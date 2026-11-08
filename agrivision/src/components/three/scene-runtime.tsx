@@ -58,7 +58,7 @@ interface BoundaryState {
 }
 
 /** Keeps a 3D failure from taking down the page; shows the static preview with a retry button. */
-export class SceneBoundary extends Component<{ children: ReactNode; onRetry?: () => void }, BoundaryState> {
+export class SceneBoundary extends Component<{ children: ReactNode; onRetry?: () => void; onError?: () => void }, BoundaryState> {
   state: BoundaryState = { error: null };
 
   static getDerivedStateFromError(error: Error): BoundaryState {
@@ -67,6 +67,9 @@ export class SceneBoundary extends Component<{ children: ReactNode; onRetry?: ()
 
   componentDidCatch(error: Error) {
     console.error("[3D] scene crashed, showing fallback:", error);
+    // The scene will never report "ready", so let the parent hide its loading overlay;
+    // otherwise the loader would cover the fallback forever.
+    this.props.onError?.();
   }
 
   render() {

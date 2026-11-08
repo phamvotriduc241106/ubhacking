@@ -18,19 +18,27 @@ def load_models():
     return det, classifier, embedding, (check['coef'], float(check['intercept']))
 
 def infer_image(image_bytes: bytes) -> dict:
-    import cv2
-    import numpy as np
     from PIL import Image, ImageOps
     from io import BytesIO
     # Normalize orientation so boxes correspond to the displayed image.
     with Image.open(BytesIO(image_bytes)) as source:
         oriented = ImageOps.exif_transpose(source).convert('RGB')
-        if oriented.width * oriented.height > 25_000_000:
-            raise ValueError('Image exceeds the 25 megapixel limit.')
-        image = cv2.cvtColor(np.asarray(oriented), cv2.COLOR_RGB2BGR)
-    height, width = image.shape[:2]
+    if oriented.width * oriented.height > 25_000_000:
+        raise ValueError('Image exceeds the 25 megapixel limit.')
+    width, height = oriented.size
+    unavailable = {'status': 'unavailable', 'width': width, 'height': height, 'detections': [], 'counts': {}}
+    # Check cheap prerequisites first so a fresh install reports *why* the model is off
+    # instead of a generic failure.
     if not all((MODEL_DIR / name).exists() for name in ('detector_yolo26s_best.pt','ripeness_yolo26s-cls_best.pt','rotten_check.npz')):
-        return {'status': 'unavailable', 'message': 'Model weights are not installed.', 'width': width, 'height': height, 'detections': [], 'counts': {}}
+        return {**unavailable, 'message': 'Model weights are not installed. Run: python scripts/download_models.py'}
+    try:
+        import cv2
+        import numpy as np
+        with MODEL_LOCK:
+            load_models()
+    except ImportError:
+        return {**unavailable, 'message': 'Model libraries are not installed. Run: pip install -r backend/requirements.txt'}
+    image = cv2.cvtColor(np.asarray(oriented), cv2.COLOR_RGB2BGR)
     with MODEL_LOCK:
         detector, classifier, embedding, (coef, intercept) = load_models()
         result = detector.predict(image, imgsz=640, conf=0.25, device='cpu', verbose=False)[0]

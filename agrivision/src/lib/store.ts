@@ -12,7 +12,7 @@ import type {
   WeatherData,
   ZoneId,
 } from "./types";
-import { DEFAULT_THRESHOLDS } from "./thresholds";
+import { DEFAULT_THRESHOLDS, THRESHOLD_FIELDS } from "./thresholds";
 import { LOCATIONS, type Location } from "./weather";
 
 export type QualityPref = "auto" | "high" | "lite";
@@ -69,6 +69,38 @@ interface AppState {
 }
 
 const MAX_RECENT = 60;
+
+const CONDITIONS: WeatherCondition[] = ["sunny", "cloudy", "rainy"];
+const QUALITIES: QualityPref[] = ["auto", "high", "lite"];
+const MODES: DataMode[] = ["demo", "live"];
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/** Keep only saved fields that have the right type and range; drop everything else. */
+export function sanitizePersisted(raw: unknown): Partial<AppState> {
+  if (!isObj(raw)) return {};
+  const out: Partial<AppState> = {};
+  if (MODES.includes(raw.mode as DataMode)) out.mode = raw.mode as DataMode;
+  if (typeof raw.liveEndpoint === "string" && raw.liveEndpoint.trim()) out.liveEndpoint = raw.liveEndpoint.trim();
+  if (finite(raw.pollMs)) out.pollMs = Math.min(600000, Math.max(1000, raw.pollMs));
+  if (CONDITIONS.includes(raw.condition as WeatherCondition)) out.condition = raw.condition as WeatherCondition;
+  if (QUALITIES.includes(raw.quality as QualityPref)) out.quality = raw.quality as QualityPref;
+  if (typeof raw.healthOverlay === "boolean") out.healthOverlay = raw.healthOverlay;
+  if (typeof raw.showSensors === "boolean") out.showSensors = raw.showSensors;
+  const loc = raw.location;
+  if (isObj(loc) && typeof loc.name === "string" && finite(loc.latitude) && finite(loc.longitude) && Math.abs(loc.latitude) <= 90 && Math.abs(loc.longitude) <= 180) {
+    out.location = { name: loc.name, latitude: loc.latitude, longitude: loc.longitude };
+  }
+  if (isObj(raw.thresholds)) {
+    const t: Partial<Thresholds> = {};
+    for (const f of THRESHOLD_FIELDS) {
+      const v = raw.thresholds[f.key];
+      if (finite(v)) t[f.key] = Math.min(f.max, Math.max(f.min, v));
+    }
+    out.thresholds = { ...DEFAULT_THRESHOLDS, ...t };
+  }
+  return out;
+}
 const MAX_HISTORY = 24 * 6 + 2;
 
 export const useApp = create<AppState>()(
@@ -152,8 +184,10 @@ export const useApp = create<AppState>()(
         healthOverlay: s.healthOverlay,
         showSensors: s.showSensors,
       }),
+      // Saved settings come from the browser and may be corrupt, edited by hand, or written by
+      // an older version. Validate every field so a bad value can never crash the first render.
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<AppState>;
+        const p = sanitizePersisted(persisted);
         return {
           ...current,
           ...p,

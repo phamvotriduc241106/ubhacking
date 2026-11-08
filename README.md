@@ -4,15 +4,20 @@ A tomato-growing decision-support prototype combining a mobile photo, simulated 
 
 ## 3D interface
 
-The upgraded Next.js interface is in `agrivision/`, alongside the existing Vite frontend. Start the backend on port 8001, then run:
+The upgraded Next.js interface is in `agrivision/`, alongside the existing Vite frontend. It works on its own in Demo Mode; start the backend (below, port 8000) to get real photo analysis.
+
+- **Windows:** double-click `agrivision\start.bat` (after extracting the ZIP, if you downloaded one).
+- **macOS / Linux:** `./agrivision/start.sh`
+
+Or manually:
 
 ```bash
 cd agrivision
 npm ci
-FOLLAND_API_URL=http://127.0.0.1:8001 npm run dev -- -p 3001
+npm run dev
 ```
 
-Open `http://localhost:3001`. The 3D views are simulations; real photo results come from the backend. See [3D interface guide](agrivision/README.md).
+Open `http://localhost:3000`. The 3D views are simulations; real photo results come from the backend. See [3D interface guide](agrivision/README.md).
 
 ## Quick start
 
@@ -26,6 +31,18 @@ pip install -r backend/requirements.txt
 python scripts/download_models.py  # downloads pretrained AGPL-3.0 weights
 uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+On **Windows** (PowerShell), from the repository root:
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+python scripts\download_models.py
+python backend\app.py
+```
+
+If PowerShell blocks `Activate.ps1`, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once. `python backend/app.py` and the `uvicorn` command above are equivalent.
 
 In a second terminal:
 

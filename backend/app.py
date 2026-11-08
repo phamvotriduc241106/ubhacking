@@ -1,9 +1,15 @@
 import uuid
 import asyncio
 import os
+import sys
 import time
-from collections import defaultdict, deque
 from pathlib import Path
+
+# Allow `python backend/app.py` as well as `uvicorn backend.app:app`. Run as a script,
+# Python only puts backend/ on the import path, so `import backend...` would fail.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from collections import defaultdict, deque
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -256,4 +262,6 @@ if os.getenv('FOLLAND_SERVE_FRONTEND') == '1' and (frontend_dist / 'index.html')
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app:app", host="0.0.0.0", port=8000, reload=True)
+    root = Path(__file__).resolve().parents[1]
+    os.chdir(root)  # so the reloader can import backend.app from any starting folder
+    uvicorn.run("backend.app:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")), reload=True, reload_dirs=[str(root / "backend")])

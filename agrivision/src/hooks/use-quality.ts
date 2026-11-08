@@ -5,10 +5,19 @@ import { useApp } from "@/lib/store";
 
 export type RenderQuality = "high" | "lite" | "none";
 
-function hasWebGL() {
+/**
+ * three.js r163+ renders only with WebGL 2. Older devices that offer just WebGL 1 would
+ * pass a "webgl" check and then crash inside the renderer, so require WebGL 2 here and
+ * show the static fallback otherwise.
+ */
+function hasWebGL2() {
   try {
     const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+    const gl = c.getContext("webgl2");
+    if (!gl) return false;
+    // Release the probe context right away; browsers cap how many can be alive at once.
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return true;
   } catch {
     return false;
   }
@@ -23,7 +32,7 @@ export function useQuality(): { quality: RenderQuality; ready: boolean; reducedM
   const [auto, setAuto] = useState<{ q: RenderQuality; reduced: boolean } | null>(null);
 
   useEffect(() => {
-    if (!hasWebGL()) {
+    if (!hasWebGL2()) {
       setAuto({ q: "none", reduced: false });
       return;
     }
