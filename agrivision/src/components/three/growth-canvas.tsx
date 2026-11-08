@@ -3,13 +3,14 @@
 import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { animate } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useQuality } from "@/hooks/use-quality";
-import { createNoiseTexture } from "./geometries";
+import { getNoiseTexture } from "./geometries";
 import { PlantField } from "./plant-field";
 import { SceneFallback, SceneLoader } from "./scene-fallback";
+import { ContextLossGuard, SceneBoundary, SceneReady } from "./scene-runtime";
 
 function plantHeight(g: number) {
   return 0.1 + 1.55 * Math.pow(Math.max(0, g) / 5, 0.85);
@@ -44,9 +45,7 @@ function Rig({ growth }: { growth: number }) {
 
 function Planter() {
   const soil = useMemo(() => {
-    const t = createNoiseTexture([70, 50, 34], 38, 128, 0.14, 11);
-    t.repeat.set(2, 2);
-    return t;
+    return getNoiseTexture([70, 50, 34], 38, 128, 0.14, 11, [2, 2]);
   }, []);
   return (
     <group>
@@ -70,6 +69,12 @@ export default function GrowthCanvas({ growth }: { growth: number }) {
   const { quality, ready, reducedMotion } = useQuality();
   const [shown, setShown] = useState(growth);
   const [loaded, setLoaded] = useState(false);
+  const [generation, setGeneration] = useState(0);
+  const remount = useCallback(() => {
+    setLoaded(false);
+    setGeneration((g) => g + 1);
+  }, []);
+  const onReady = useCallback(() => setLoaded(true), []);
 
   useEffect(() => {
     if (reducedMotion) {
@@ -94,12 +99,13 @@ export default function GrowthCanvas({ growth }: { growth: number }) {
 
   return (
     <div className="relative h-full w-full">
+      <SceneBoundary onRetry={remount}>
       <Canvas
+        key={generation}
         shadows={high}
         dpr={high ? [1, 1.75] : 1}
         camera={{ position: [2.3, 1.5, 2.6], fov: 35 }}
         gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
-        onCreated={() => setTimeout(() => setLoaded(true), 200)}
       >
         <hemisphereLight args={["#f4f9ff", "#3b4a2a", 0.9]} />
         <directionalLight position={[3, 5, 2]} intensity={2.4} castShadow={high} shadow-mapSize={[1024, 1024]} shadow-bias={-0.0004} color="#fff3dc" />
@@ -110,9 +116,14 @@ export default function GrowthCanvas({ growth }: { growth: number }) {
         </Environment>
         <Planter />
         <PlantField plants={plants} wind={reducedMotion ? 0 : 0.03} shadows={high} />
-        <ContactShadows position={[0, 0, 0]} opacity={0.45} scale={4} blur={2.4} far={2} />
+        {/* Contact shadows re-render the scene twice per frame by default. Render once per
+            growth step instead; the planter is static and sway is too small to matter. */}
+        <ContactShadows key={Math.round(shown * 2)} frames={1} position={[0, 0, 0]} opacity={0.45} scale={4} blur={2.4} far={2} />
         <Rig growth={shown} />
+        <SceneReady onReady={onReady} />
+        <ContextLossGuard onLost={remount} />
       </Canvas>
+      </SceneBoundary>
       <SceneLoader hidden={loaded} />
     </div>
   );

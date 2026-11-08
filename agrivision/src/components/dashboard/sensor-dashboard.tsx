@@ -2,7 +2,7 @@
 
 import { Activity, Droplets, Ruler, Sun, Thermometer } from "lucide-react";
 import { CHART_COLORS } from "@/components/charts/chart-theme";
-import { SensorChart } from "@/components/charts/sensor-chart";
+import { LazySensorChart } from "@/components/charts/lazy-sensor-chart";
 import { OriginBadge } from "@/components/shared/origin-badge";
 import { PageHeader } from "@/components/shared/section-heading";
 import { Reveal } from "@/components/shared/reveal";
@@ -97,7 +97,7 @@ export function SensorDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <SensorChart history={history.length ? history : recent} height={340} />
+            <LazySensorChart history={history.length ? history : recent} height={340} />
           </CardContent>
         </Card>
 

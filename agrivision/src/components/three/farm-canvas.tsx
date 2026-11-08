@@ -3,7 +3,7 @@
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useQuality } from "@/hooks/use-quality";
 import { usePlants } from "@/hooks/use-plants";
@@ -11,6 +11,7 @@ import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { FarmScene, type FarmSceneProps } from "./farm-scene";
 import { SceneFallback, SceneLoader } from "./scene-fallback";
+import { ContextLossGuard, SceneBoundary, SceneReady } from "./scene-runtime";
 
 type Props = Pick<FarmSceneProps, "variant" | "onSelectPlant" | "onSelectSensor" | "selectedSensorId"> & {
   className?: string;
@@ -31,7 +32,15 @@ export default function FarmCanvas({ variant, className, onSelectPlant, onSelect
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
   const [loaded, setLoaded] = useState(false);
-  const [dpr, setDpr] = useState(1.5);
+  // Pixel-ratio penalty applied by the performance monitor (0 = full resolution).
+  const [dprPenalty, setDprPenalty] = useState(0);
+  // Bumped to remount the canvas after a lost WebGL context or a crash.
+  const [generation, setGeneration] = useState(0);
+  const remount = useCallback(() => {
+    setLoaded(false);
+    setGeneration((g) => g + 1);
+  }, []);
+  const onReady = useCallback(() => setLoaded(true), []);
   // Hero: wheel-zoom only after the visitor clicks into the scene, so page scrolling still works.
   const [engaged, setEngaged] = useState(variant === "twin");
 
@@ -43,14 +52,12 @@ export default function FarmCanvas({ variant, className, onSelectPlant, onSelect
     return () => io.disconnect();
   }, []);
 
-  useEffect(() => {
-    setDpr(Math.min(quality === "high" ? 1.75 : 1.5, window.devicePixelRatio || 1));
-  }, [quality]);
-
   if (!ready) return <div className={cn("relative h-full w-full", className)}><SceneLoader /></div>;
   if (quality === "none") return <div className={cn("relative h-full w-full", className)}><SceneFallback /></div>;
 
   const high = quality === "high";
+  const maxDpr = Math.min(high ? 1.75 : 1.5, window.devicePixelRatio || 1);
+  const dpr = Math.max(1, maxDpr - dprPenalty);
   return (
     <div
       ref={wrap}
@@ -58,20 +65,20 @@ export default function FarmCanvas({ variant, className, onSelectPlant, onSelect
       onPointerDown={() => setEngaged(true)}
       onPointerLeave={() => variant === "hero" && setEngaged(false)}
     >
+      <SceneBoundary onRetry={remount}>
       <Canvas
-        key={quality}
+        key={`${quality}-${generation}`}
         shadows={high}
         dpr={dpr}
         frameloop={visible ? "always" : "never"}
         camera={{ position: variant === "hero" ? [13.5, 5.2, 13.5] : [13, 10, 14], fov: variant === "hero" ? 38 : 42, near: 0.1, far: 200 }}
         gl={{ antialias: high, powerPreference: "high-performance", alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
-        onCreated={() => setTimeout(() => setLoaded(true), 250)}
         onPointerMissed={() => variant === "twin" && onSelectPlant?.(null)}
       >
         {high && (
           <PerformanceMonitor
-            onDecline={() => setDpr((d) => Math.max(1, d - 0.25))}
-            onIncline={() => setDpr((d) => Math.min(1.75, d + 0.25))}
+            onDecline={() => setDprPenalty((p) => Math.min(maxDpr - 1, p + 0.25))}
+            onIncline={() => setDprPenalty((p) => Math.max(0, p - 0.25))}
             flipflops={3}
           />
         )}
@@ -93,7 +100,10 @@ export default function FarmCanvas({ variant, className, onSelectPlant, onSelect
           onSelectPlant={onSelectPlant}
           onSelectSensor={onSelectSensor}
         />
+        <SceneReady onReady={onReady} />
+        <ContextLossGuard onLost={remount} />
       </Canvas>
+      </SceneBoundary>
       <SceneLoader hidden={loaded} />
     </div>
   );

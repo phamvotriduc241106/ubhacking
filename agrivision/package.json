@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --turbopack -p 3000",
+    "dev:webpack": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
+    "serve": "node scripts/serve.mjs",
+    "preview": "next build && next start -p 3000",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
@@ -48,5 +51,8 @@
   },
   "overrides": {
     "postcss": "$postcss"
+  },
+  "engines": {
+    "node": ">=18.18"
   }
 }

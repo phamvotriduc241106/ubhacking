@@ -1,11 +1,12 @@
 "use client";
 
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { HealthStatus } from "@/lib/types";
-import { createCompoundLeafGeometry, createFruitGeometry, createStarGeometry, createStemGeometry } from "./geometries";
+import { getPlantGeometries } from "./geometries";
 import { buildPlantSpec, type PlantElement } from "./plant-spec";
+import { createWindDepthMaterial, createWindUniforms, withWind } from "./wind";
 
 export interface PlantInput {
   id: string;
@@ -13,13 +14,6 @@ export interface PlantInput {
   growth: number;
   seed: number;
   health: HealthStatus;
-}
-
-interface FlatElement {
-  local: THREE.Matrix4;
-  hf: number;
-  plant: number;
-  color?: THREE.Color;
 }
 
 interface Props {
@@ -33,136 +27,160 @@ interface Props {
   onHover?: (id: string | null) => void;
 }
 
-const tmpM = new THREE.Matrix4();
-const tmpR = new THREE.Matrix4();
-const tmpT = new THREE.Matrix4();
-const tmpE = new THREE.Euler();
+type PartKey = "stems" | "leaves" | "fruits" | "calyxes" | "flowers";
+const PARTS: PartKey[] = ["stems", "leaves", "fruits", "calyxes", "flowers"];
 
-function flatten(specs: ReturnType<typeof buildPlantSpec>[], key: "stems" | "leaves" | "fruits" | "calyxes" | "flowers") {
-  const out: FlatElement[] = [];
-  specs.forEach((s, plant) => s[key].forEach((e: PlantElement) => out.push({ local: e.matrix, hf: e.hf, plant, color: e.color })));
-  return out;
+interface FlatPart {
+  count: number;
+  matrices: Float32Array;
+  base: Float32Array;
+  sway: Float32Array;
+  colors: Float32Array | null;
 }
 
-export function PlantField({ plants, detail = 1, wind = 0.04, shadows = true, onSelect, onHover }: Props) {
-  const geo = useMemo(
-    () => ({
-      leaf: createCompoundLeafGeometry(),
-      stem: createStemGeometry(),
-      fruit: createFruitGeometry(),
-      star: createStarGeometry(5, 1, 0.38),
-      flower: createStarGeometry(5, 1, 0.45),
-      hit: new THREE.CylinderGeometry(1, 1, 1, 8).translate(0, 0.5, 0),
-    }),
-    [],
+/** Round instance capacity up so small count changes (growth slider) reuse the same buffers. */
+const capacityFor = (n: number) => Math.max(32, Math.ceil(n / 64) * 64);
+
+const tmpM = new THREE.Matrix4();
+const tmpT = new THREE.Matrix4();
+
+function flatten(specs: ReturnType<typeof buildPlantSpec>[], plants: PlantInput[], key: PartKey): FlatPart {
+  let count = 0;
+  for (const s of specs) count += s[key].length;
+  const matrices = new Float32Array(count * 16);
+  const base = new Float32Array(count * 3);
+  const sway = new Float32Array(count * 3);
+  let colors: Float32Array | null = null;
+  let i = 0;
+  specs.forEach((s, pi) => {
+    const p = plants[pi].position;
+    const phase = (plants[pi].seed % 1000) / 159;
+    tmpT.makeTranslation(p[0], p[1], p[2]);
+    s[key].forEach((e: PlantElement) => {
+      tmpM.multiplyMatrices(tmpT, e.matrix).toArray(matrices, i * 16);
+      base.set(p, i * 3);
+      sway[i * 3] = phase + p[0] * 0.4;
+      sway[i * 3 + 1] = phase * 1.3 + p[2] * 0.3;
+      sway[i * 3 + 2] = e.hf;
+      if (e.color) {
+        colors ??= new Float32Array(count * 3).fill(1);
+        e.color.toArray(colors, i * 3);
+      }
+      i++;
+    });
+  });
+  return { count, matrices, base, sway, colors };
+}
+
+/** One instanced mesh for a plant part, with GPU wind and a reusable capacity. */
+function PartMesh({
+  part,
+  geometry,
+  material,
+  depthMaterial,
+  castShadow,
+  receiveShadow,
+}: {
+  part: FlatPart;
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material;
+  depthMaterial: THREE.Material;
+  castShadow: boolean;
+  receiveShadow?: boolean;
+}) {
+  const cap = capacityFor(part.count);
+  // Per-mesh geometry clone carries the per-instance wind attributes.
+  const geo = useMemo(() => {
+    const g = geometry.clone();
+    g.setAttribute("aBase", new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3));
+    g.setAttribute("aSway", new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3));
+    return g;
+  }, [geometry, cap]);
+  useEffect(() => () => geo.dispose(), [geo]);
+
+  const ref = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    mesh.count = part.count;
+    (mesh.instanceMatrix.array as Float32Array).set(part.matrices);
+    mesh.instanceMatrix.clearUpdateRanges();
+    mesh.instanceMatrix.addUpdateRange(0, part.count * 16);
+    mesh.instanceMatrix.needsUpdate = true;
+    const aBase = geo.getAttribute("aBase") as THREE.InstancedBufferAttribute;
+    const aSway = geo.getAttribute("aSway") as THREE.InstancedBufferAttribute;
+    (aBase.array as Float32Array).set(part.base);
+    (aSway.array as Float32Array).set(part.sway);
+    aBase.needsUpdate = true;
+    aSway.needsUpdate = true;
+    if (part.colors) {
+      if (!mesh.instanceColor) mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3);
+      (mesh.instanceColor.array as Float32Array).set(part.colors);
+      mesh.instanceColor.needsUpdate = true;
+    }
+  }, [part, geo, cap]);
+
+  return (
+    <instancedMesh
+      key={cap}
+      ref={ref}
+      args={[geo, material, cap]}
+      castShadow={castShadow}
+      receiveShadow={receiveShadow}
+      customDepthMaterial={depthMaterial}
+      frustumCulled={false}
+    />
   );
+}
+
+function PlantFieldImpl({ plants, detail = 1, wind = 0.04, shadows = true, onSelect, onHover }: Props) {
+  const geo = getPlantGeometries();
+  const uniforms = useMemo(() => createWindUniforms(wind), []); // eslint-disable-line react-hooks/exhaustive-deps
   const mat = useMemo(
     () => ({
-      leaf: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.72, side: THREE.DoubleSide }),
-      stem: new THREE.MeshStandardMaterial({ color: "#4d7c36", roughness: 0.85 }),
-      fruit: new THREE.MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.25 }),
-      calyx: new THREE.MeshStandardMaterial({ color: "#3f7a2e", roughness: 0.8, side: THREE.DoubleSide }),
-      flower: new THREE.MeshStandardMaterial({ color: "#ffd83a", emissive: "#a67c00", emissiveIntensity: 0.55, roughness: 0.55, side: THREE.DoubleSide }),
+      leaf: withWind(new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.72, side: THREE.DoubleSide }), uniforms),
+      stem: withWind(new THREE.MeshStandardMaterial({ color: "#4d7c36", roughness: 0.85 }), uniforms),
+      fruit: withWind(new THREE.MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.25 }), uniforms),
+      calyx: withWind(new THREE.MeshStandardMaterial({ color: "#3f7a2e", roughness: 0.8, side: THREE.DoubleSide }), uniforms),
+      flower: withWind(new THREE.MeshStandardMaterial({ color: "#ffd83a", emissive: "#a67c00", emissiveIntensity: 0.55, roughness: 0.55, side: THREE.DoubleSide }), uniforms),
+      depth: createWindDepthMaterial(uniforms),
+      depthDouble: createWindDepthMaterial(uniforms, THREE.DoubleSide),
       hit: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }),
     }),
-    [],
+    [uniforms],
   );
+  useEffect(() => () => Object.values(mat).forEach((m) => m.dispose()), [mat]);
 
-  const specs = useMemo(
-    () => plants.map((p) => buildPlantSpec(p.growth, p.seed, p.health, detail)),
-    [plants, detail],
-  );
-  const groups = useMemo(
-    () => ({
-      stems: flatten(specs, "stems"),
-      leaves: flatten(specs, "leaves"),
-      fruits: flatten(specs, "fruits"),
-      calyxes: flatten(specs, "calyxes"),
-      flowers: flatten(specs, "flowers"),
-    }),
-    [specs],
-  );
+  const specs = useMemo(() => plants.map((p) => buildPlantSpec(p.growth, p.seed, p.health, detail)), [plants, detail]);
+  const parts = useMemo(() => Object.fromEntries(PARTS.map((k) => [k, flatten(specs, plants, k)])) as Record<PartKey, FlatPart>, [specs, plants]);
 
-  const refs = {
-    stems: useRef<THREE.InstancedMesh>(null),
-    leaves: useRef<THREE.InstancedMesh>(null),
-    fruits: useRef<THREE.InstancedMesh>(null),
-    calyxes: useRef<THREE.InstancedMesh>(null),
-    flowers: useRef<THREE.InstancedMesh>(null),
-  };
   const hitRef = useRef<THREE.InstancedMesh>(null);
-  const phases = useMemo(() => plants.map((p) => (p.seed % 1000) / 159), [plants]);
-
-  const writeMatrices = (time: number) => {
-    const sway = plants.map((p, i) => [
-      Math.sin(time * 1.35 + phases[i] + p.position[0] * 0.4) * wind,
-      Math.cos(time * 1.05 + phases[i] * 1.3 + p.position[2] * 0.3) * wind * 0.6,
-    ]);
-    (Object.keys(refs) as (keyof typeof refs)[]).forEach((k) => {
-      const mesh = refs[k].current;
-      if (!mesh) return;
-      const list = groups[k];
-      for (let i = 0; i < list.length; i++) {
-        const e = list[i];
-        const p = plants[e.plant].position;
-        const [ax, az] = sway[e.plant];
-        const bend = e.hf * e.hf;
-        tmpE.set(ax * bend, 0, az * bend);
-        tmpR.makeRotationFromEuler(tmpE);
-        tmpT.makeTranslation(p[0], p[1], p[2]);
-        tmpM.multiplyMatrices(tmpT, tmpR).multiply(e.local);
-        mesh.setMatrixAt(i, tmpM);
-      }
-      mesh.instanceMatrix.needsUpdate = true;
-    });
-  };
-
   useLayoutEffect(() => {
-    (Object.keys(refs) as (keyof typeof refs)[]).forEach((k) => {
-      const mesh = refs[k].current;
-      if (!mesh) return;
-      groups[k].forEach((e, i) => {
-        if (e.color) mesh.setColorAt(i, e.color);
-      });
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    });
     const hit = hitRef.current;
-    if (hit) {
-      plants.forEach((p, i) => {
-        const h = specs[i].height + 0.15;
-        hit.setMatrixAt(i, tmpM.compose(new THREE.Vector3(...p.position), new THREE.Quaternion(), new THREE.Vector3(0.34, h, 0.34)));
-      });
-      hit.instanceMatrix.needsUpdate = true;
-      hit.computeBoundingSphere();
-    }
-    writeMatrices(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, plants, specs]);
+    if (!hit) return;
+    const v = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    plants.forEach((p, i) => hit.setMatrixAt(i, tmpM.compose(v.set(...p.position), q, s.set(0.34, specs[i].height + 0.15, 0.34))));
+    hit.instanceMatrix.needsUpdate = true;
+    hit.computeBoundingSphere();
+  }, [plants, specs]);
 
-  const frame = useRef(0);
-  useFrame(({ clock }) => {
-    if (wind <= 0) return;
-    frame.current++;
-    // Lite mode renders fewer leaves; also update every other frame there to save CPU.
-    if (detail < 1 && frame.current % 2) return;
-    writeMatrices(clock.elapsedTime);
+  // Only two uniform writes per frame; all sway math runs in the vertex shader.
+  useFrame(({ clock }, dt) => {
+    uniforms.uTime.value = clock.elapsedTime;
+    uniforms.uWind.value = THREE.MathUtils.damp(uniforms.uWind.value, wind, 2, dt);
   });
 
   const pick = (e: ThreeEvent<PointerEvent | MouseEvent>) => (e.instanceId != null ? plants[e.instanceId]?.id : undefined);
 
   return (
     <group>
-      <instancedMesh key={`s${groups.stems.length}`} ref={refs.stems} args={[geo.stem, mat.stem, groups.stems.length]} castShadow={shadows} frustumCulled={false} />
-      <instancedMesh key={`l${groups.leaves.length}`} ref={refs.leaves} args={[geo.leaf, mat.leaf, groups.leaves.length]} castShadow={shadows} receiveShadow={shadows} frustumCulled={false} />
-      {groups.fruits.length > 0 && (
-        <instancedMesh key={`f${groups.fruits.length}`} ref={refs.fruits} args={[geo.fruit, mat.fruit, groups.fruits.length]} castShadow={shadows} frustumCulled={false} />
-      )}
-      {groups.calyxes.length > 0 && (
-        <instancedMesh key={`c${groups.calyxes.length}`} ref={refs.calyxes} args={[geo.star, mat.calyx, groups.calyxes.length]} frustumCulled={false} />
-      )}
-      {groups.flowers.length > 0 && (
-        <instancedMesh key={`w${groups.flowers.length}`} ref={refs.flowers} args={[geo.flower, mat.flower, groups.flowers.length]} frustumCulled={false} />
-      )}
+      <PartMesh part={parts.stems} geometry={geo.stem} material={mat.stem} depthMaterial={mat.depth} castShadow={shadows} />
+      <PartMesh part={parts.leaves} geometry={geo.leaf} material={mat.leaf} depthMaterial={mat.depthDouble} castShadow={shadows} receiveShadow={shadows} />
+      {parts.fruits.count > 0 && <PartMesh part={parts.fruits} geometry={geo.fruit} material={mat.fruit} depthMaterial={mat.depth} castShadow={shadows} />}
+      {parts.calyxes.count > 0 && <PartMesh part={parts.calyxes} geometry={geo.star} material={mat.calyx} depthMaterial={mat.depthDouble} castShadow={false} />}
+      {parts.flowers.count > 0 && <PartMesh part={parts.flowers} geometry={geo.flower} material={mat.flower} depthMaterial={mat.depthDouble} castShadow={false} />}
       {onSelect && (
         <instancedMesh
           key={`h${plants.length}`}
@@ -187,3 +205,6 @@ export function PlantField({ plants, detail = 1, wind = 0.04, shadows = true, on
     </group>
   );
 }
+
+/** Memoized so sensor ticks that re-render the scene do not touch the plants. */
+export const PlantField = memo(PlantFieldImpl);
