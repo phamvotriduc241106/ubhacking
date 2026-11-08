@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from io import BytesIO
 from PIL import Image, ImageOps, UnidentifiedImageError
 from fastapi import HTTPException
-from backend.models import DetectorResult, VisualObservation, EvidenceItem
+from backend.models import DetectorResult, VisualObservation
 from backend.services.tomato_detector import infer_image
 from backend.services.gemini_service import observe
 from backend.services.report_generator import generate
@@ -177,7 +177,7 @@ async def analyze_plant(
         visual_obs = VisualObservation(photo_uploaded=True, filename=image.filename, content_type=image.content_type,
             file_size_kb=round(len(image_bytes)/1024,1), maturity_stage=stage,
             stage_label='Review detected fruit' if detector.detections else 'Tomato detection unavailable or no fruit detected',
-            visual_confidence='low', is_simulated=False, ai_provider='gemini-2.5-flash' if observation else None,
+            visual_confidence='low', is_simulated=False, ai_provider=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash') if observation else None,
             detected_leaf_symptoms=observation.leaf_symptoms if observation and observation.leaf_symptoms != 'unknown' else None,
             leaf_condition_summary=observation.leaf_description if observation else None,
             observation_notes=observation.fruit_description if observation else 'Gemini visual observation unavailable; review the model result and photo manually.')
@@ -187,7 +187,7 @@ async def analyze_plant(
     # If Gemini analyzed the image, its automated foliage detection takes precedence over manual user selection
     effective_leaf_symptoms = leaf_symptoms
     leaf_symptoms_source = "user"
-    if visual_obs.ai_provider == "gemini-2.5-flash" and visual_obs.detected_leaf_symptoms:
+    if observation and visual_obs.detected_leaf_symptoms:
         effective_leaf_symptoms = visual_obs.detected_leaf_symptoms
         leaf_symptoms_source = "simulated" if visual_obs.is_simulated else "ai"
     elif (not leaf_symptoms or leaf_symptoms == "none") and visual_obs.detected_leaf_symptoms:
@@ -212,20 +212,7 @@ async def analyze_plant(
         leaf_symptoms_source=leaf_symptoms_source,
     )
 
-    if detector.status == 'ok' and detector.detections:
-        card = decision_results['harvest']
-        evidence = [EvidenceItem(type='PREDICTED', label='Local tomato classifier', detail=f"{len(detector.detections)} candidate fruit; model scores are uncalibrated.")] + card.evidence
-        decision_results['harvest'] = card.model_copy(update={'evidence': evidence})
-    # Never convert an uncertain, absent, conflicting, mixed, or rotten prediction into a harvest-ready decision.
-    if detector.status != 'not_run':
-        rotten = any(d.label == 'rotten' or d.raw_label == 'rotten' for d in detector.detections)
-        if rotten or disagreement or not detector.detections or visual_obs.maturity_stage == 'uncertain':
-            card = decision_results['harvest']
-            reason = ('Possible spoiled fruit or disagreement in rotten checks; isolate and inspect it. Do not assume it is suitable for consumption.' if rotten else 'A reliable harvest decision is unavailable. Inspect the fruit and retake a clear photo if needed.')
-            decision_results['harvest'] = card.model_copy(update={'status':'inspect_manually', 'title':'Inspect fruit manually', 'recommendation':reason, 'next_action':'Check fruit condition, firmness, variety, and ripeness before harvesting.', 'limitations':['Model scores are not calibrated for field use.', 'A photo cannot establish food safety or internal quality.']})
-        elif visual_obs.maturity_stage in ('red', 'turning', 'green'):
-            card = decision_results['harvest']
-            decision_results['harvest'] = card.model_copy(update={'limitations':['Model predictions are not calibrated for this growing environment.', 'Color alone does not establish ripeness or food safety.']})
+    decision_results['harvest'] = DecisionEngine.apply_fruit_detections(decision_results['harvest'], detector, visual_obs, disagreement)
     report = await generate(visual_obs, detector, observation, sensor_data, weather_data, decision_results, disagreement)
 
     response = AnalysisResponse(

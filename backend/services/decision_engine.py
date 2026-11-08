@@ -8,6 +8,7 @@ from backend.models import (
     RecommendationCard,
     EvidenceItem,
     ReferenceItem,
+    DetectorResult,
 )
 
 KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent.parent / "knowledge" / "tomato_rules.json"
@@ -21,6 +22,38 @@ def _fmt(value) -> str:
 class DecisionEngine:
     _rules: Dict[str, Any] = {}
     _sources: Dict[str, ReferenceItem] = {}
+
+    @staticmethod
+    def apply_fruit_detections(card: RecommendationCard, detector: DetectorResult, visual: VisualObservation, disagreement: str | None) -> RecommendationCard:
+        if detector.status == 'not_run':
+            return card
+        fruit = detector.detections if detector.status == 'ok' else []
+        counts = {label: sum(d.label == label for d in fruit) for label in ('ripe', 'half_ripe', 'raw', 'rotten')}
+        rotten = any(d.label == 'rotten' or d.raw_label == 'rotten' for d in fruit)
+        mixed = len({d.label for d in fruit}) > 1
+        uncertain = any(d.uncertain for d in fruit)
+        summary = f"AI-predicted candidates: {counts['ripe']} ripe, {counts['half_ripe']} half-ripe, {counts['raw']} unripe"
+        if counts['rotten']:
+            summary += f", {counts['rotten']} potentially rotten"
+        evidence = list(card.evidence)
+        if fruit:
+            evidence.insert(0, EvidenceItem(type='PREDICTED', label='Local tomato classifier', detail=summary + '; scores are uncalibrated.'))
+        limitations = ['Model scores are uncalibrated and field performance is not validated.', 'Color predictions cannot establish exact ripeness, internal quality, or food safety.']
+        if rotten or disagreement or mixed or uncertain or not fruit or visual.maturity_stage == 'uncertain':
+            if rotten:
+                advice = 'Potentially spoiled fruit or conflicting spoilage checks need separate inspection. Do not assume it is safe to eat.'
+                action = 'Inspect and separate any potentially spoiled fruit before considering harvest.'
+            elif disagreement:
+                advice = 'The visual models disagree. Inspect the fruit manually before making a harvest decision.'
+                action = 'Review the fruit and retake a clear photo if needed.'
+            elif fruit and counts['ripe']:
+                advice = 'Check the apparently ripe tomatoes first; verify each fruit manually before harvesting.'
+                action = 'Check color, firmness, variety, and condition of the apparently ripe fruit first.'
+            else:
+                advice = 'Inspect the fruit manually; the image does not establish harvest readiness.'
+                action = 'Check fruit condition, firmness, variety, and ripeness before harvesting.'
+            return card.model_copy(update={'status': 'inspect_manually', 'title': 'Inspect fruit manually', 'recommendation': (summary + '. ' if fruit else '') + advice, 'next_action': action, 'limitations': limitations, 'evidence': evidence})
+        return card.model_copy(update={'recommendation': summary + '. ' + card.recommendation, 'limitations': limitations, 'evidence': evidence})
 
     @classmethod
     def _load_rules(cls):

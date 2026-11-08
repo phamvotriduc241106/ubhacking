@@ -3,7 +3,7 @@ import { formatLux, round } from "./utils";
 import { locationNow } from "./weather";
 
 function sensorKind(r: SensorReading): EvidenceKind {
-  return r.origin === "live" ? "sensor-live" : r.origin === "backend-simulated" ? "sensor-backend-simulated" : "sensor-simulated";
+  return r.origin === "live" ? "sensor-live" : r.origin === "manual" ? "sensor-manual" : r.origin === "unavailable" ? "sensor-unavailable" : r.origin === "backend-simulated" ? "sensor-backend-simulated" : "sensor-simulated";
 }
 
 /** Hours (from the most recent reading backwards) that a predicate has held continuously. */
@@ -225,6 +225,8 @@ export const EVIDENCE_LABEL: Record<EvidenceKind, { label: string; real: boolean
   "sensor-simulated": { label: "Simulated sensor", real: false },
   "sensor-backend-simulated": { label: "Backend simulated sensor", real: false },
   "sensor-live": { label: "Live sensor", real: true },
+  "sensor-manual": { label: "User-reported reading", real: true },
+  "sensor-unavailable": { label: "Sensor source unavailable", real: false },
   "weather-historical": { label: "Weather history", real: true },
   "weather-forecast": { label: "Weather forecast", real: true },
   "weather-simulated": { label: "Simulated weather", real: false },

@@ -31,7 +31,7 @@ export function IntegrationPanel() {
       const r = await fetchLiveReading(draft, "sunny", AbortSignal.timeout(6000));
       setTest({
         state: "ok",
-        text: `${r.temperatureC.toFixed(1)} °C · ${r.humidityPct.toFixed(0)}% RH${r.lightLux != null ? ` · ${r.lightLux} lux` : ""} — ${r.origin === "live" ? "reports live hardware" : "reports simulated data"}`,
+        text: `${r.temperatureC.toFixed(1)} °C · ${r.humidityPct.toFixed(0)}% RH${r.lightLux != null ? ` · ${r.lightLux} lux` : ""} — ${r.origin === "live" ? "reports live hardware" : r.origin === "manual" ? "user-reported" : r.origin === "unavailable" ? "source unavailable" : "reports simulated data"}`,
       });
     } catch (e) {
       setTest({ state: "fail", text: e instanceof Error ? e.message : "Request failed" });

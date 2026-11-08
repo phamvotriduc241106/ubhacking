@@ -1,5 +1,6 @@
 import type { AnalysisResult, CropCondition, EnvironmentRating, Ripeness, SensorReading, Thresholds } from "./types";
 import { round } from "./utils";
+import { dataOrigin } from "./data-origin";
 
 type ColorStats = NonNullable<AnalysisResult["colorStats"]>;
 
@@ -160,13 +161,13 @@ export async function aiAnalysis(
     timestamp: Date.parse(sensor.received_at_utc) || Date.now(), temperatureC: sensor.air_temperature_c,
     humidityPct: sensor.air_relative_humidity_pct, lightLux: null, distanceCm: sensor.ultrasonic_distance_cm ?? null,
     canopyHeightCm: sensor.canopy_height_proxy_cm ?? null, condition: reading?.condition ?? "sunny",
-    origin: sensor.data_mode === "live" ? "live" : "backend-simulated",
+    origin: dataOrigin(sensor.data_mode),
   } : null;
   const env = rateEnvironment(actualReading, t);
   const recommendations = [j.harvest, j.watering, j.fertilizer].filter(Boolean);
   return {
     id: j.analysis_id ?? `backend-${Date.now().toString(36)}`, createdAt: Date.now(),
-    source: "backend", provider: "FolLand backend", imageName: file.name,
+    source: "backend", provider: v.ai_provider ? String(v.ai_provider) : "Vision unavailable", imageName: file.name,
     cropCondition: symptoms.length ? "attention" : "unknown", ripeness,
     confidence: null,
     symptoms: symptoms.length ? symptoms : ["Plant condition is not established by this check."],
