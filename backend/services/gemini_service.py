@@ -7,7 +7,7 @@ import time
 import httpx
 from google import genai
 from google.genai import types
-from backend.models import GeminiObservation
+from backend.models import GeminiObservation, ReportNarrative
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +99,10 @@ async def write_report(evidence: dict) -> tuple[str | None, str]:
             model=os.getenv('GEMINI_MODEL', 'gemini-2.5-flash'),
             contents=json.dumps(evidence, ensure_ascii=False),
             config=types.GenerateContentConfig(system_instruction=(
-                "You are FolLand's agricultural reporting assistant. Write clear, practical reports for farmers using only supplied evidence and approved recommendations. Do not invent observations, measurements, probabilities, diagnoses, or override deterministic decisions. Differentiate measured, historical, predicted, simulated and unavailable information. Explain uncertainty and give actionable steps in short accessible paragraphs. Use these headings: Overall Plant Assessment, Ripeness and Harvest Readiness, Fruit Quality Assessment, Environmental Conditions, Watering Guidance, Fertilizer and Plant Health, Recommended Next Actions, Confidence and Data Limitations."), temperature=0.1)), timeout=25)
-        text = response.text.strip() if response.text else None
-        return (text, 'available') if text else (None, 'invalid_response')
+                "Select the safest appropriate farmer-friendly summary and conclusion from the allowed schema. Do not invent facts, numbers, diagnoses, or actions. The deterministic harvest decision is authoritative."), response_mime_type='application/json', response_schema=ReportNarrative, temperature=0.1)), timeout=25)
+        narrative = ReportNarrative.model_validate_json(response.text)
+        return narrative.model_dump_json(), 'available'
+    except (ValueError, TypeError):
+        return None, 'invalid_response'
     except Exception as error:
         return None, _status(error)

@@ -308,7 +308,7 @@ class DecisionEngine:
         if symptoms == "none":
             status = "insufficient_evidence"
             title = "Insufficient Evidence for Fertilization"
-            recom = "No nutrient stress detected and no laboratory soil assay available. Do not apply fertilizer arbitrarily."
+            recom = "Nutrient status has not been measured and no laboratory soil assay is available. Do not apply fertilizer arbitrarily."
             limitations = [
                 "Nutrient levels (N, P, K, Ca, Mg) cannot be determined from photos or environmental sensors.",
                 "Excessive nitrogen induces luxuriant foliage while suppressing fruit production and encouraging blossom end rot."
@@ -324,11 +324,11 @@ class DecisionEngine:
                 ]
                 next_action = "Check whether yellowing is on lower older leaves (mobile N deficiency) or new growth (immobile Fe/micro deficiency). Check root-zone moisture before any feeding."
             elif symptoms == "browning_spots":
-                recom = "Leaf spots or marginal necrosis observed. Highly probable fungal/bacterial leaf spot (e.g. Septoria, Early Blight) or fertilizer salt burn."
+                recom = "Reported leaf spots or browning need inspection. A photo cannot establish the cause or nutrient status."
                 limitations = [
                     "Fertilizer will NOT cure infectious pathogens and excess fertilizer will exacerbate plant susceptibility."
                 ]
-                next_action = "Prune lower infected foliage with sanitized shears. Avoid overhead wetting. Send leaf sample to local extension clinic."
+                next_action = "Inspect affected foliage, avoid overhead wetting, and consult a local extension clinic if symptoms spread."
             elif symptoms == "wilting":
                 recom = "Wilting detected. Root water uptake failure may be caused by drought, saturated anaerobic soil, or fungal vascular wilt (Fusarium/Verticillium)."
                 limitations = [

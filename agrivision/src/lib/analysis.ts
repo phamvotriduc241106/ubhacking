@@ -173,6 +173,6 @@ export async function aiAnalysis(
     summary: String(v.observation_notes || "Review the report and supporting evidence."),
     suggestions: recommendations.map((card: {next_action: string}) => card.next_action).filter(Boolean),
     environment: env.rating, environmentNotes: env.notes,
-    report: j.report, detector: j.detector, disagreement: j.disagreement, recommendations, analysisSensor: actualReading,
+    report: j.report, reportMeta: { crop: String(j.crop || "tomato"), date: String(j.timestamp_utc || ""), id: String(j.analysis_id || "Unavailable") }, detector: j.detector, disagreement: j.disagreement, recommendations, analysisSensor: actualReading,
   };
 }

@@ -24,8 +24,16 @@ def test_successful_structured_observation_and_report(monkeypatch):
     obs, status = asyncio.run(service.observe(b'image', 'image/jpeg', {'sensor': {'data_mode': 'simulated'}}))
     assert status == 'available' and obs.tomato_visible and obs.maturity_stage == 'ripe'
     assert 'simulated' in str(call.call_args)
-    fake_client(monkeypatch, 'A concise report.')
-    assert asyncio.run(service.write_report({'harvest': 'inspect'})) == ('A concise report.', 'available')
+    report_json = '{"executive_summary":"A manual check is needed before making a harvest decision.","conclusion":"Use these observations as a guide and check the plant in person."}'
+    fake_client(monkeypatch, report_json)
+    report, status = asyncio.run(service.write_report({'harvest': 'inspect'}))
+    assert status == 'available' and 'manual check' in report
+
+
+def test_report_rejects_unvalidated_numbers_and_html(monkeypatch):
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only-secret')
+    fake_client(monkeypatch, '{"executive_summary":"<b>99 ripe fruit</b>","conclusion":"safe"}')
+    assert asyncio.run(service.write_report({})) == (None, 'invalid_response')
 
 
 def test_invalid_structured_output_is_not_observation(monkeypatch):

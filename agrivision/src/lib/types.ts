@@ -81,11 +81,21 @@ export interface AnalysisResult {
   environment: EnvironmentRating;
   environmentNotes: string[];
   colorStats?: { red: number; orange: number; green: number; yellow: number; brown: number };
-  report?: { source: string; text: string; gemini_status: string } | null;
+  report?: { source: string; text: string; gemini_status: string; sections?: ReportSections | null } | null;
+  reportMeta?: { crop: string; date: string; id: string };
   disagreement?: string | null;
   detector?: { status: string; message: string; width: number | null; height: number | null; counts: Record<string, number>; detections: Array<{ box: number[]; label: string; confidence: number; uncertain: boolean; raw_label: string }> } | null;
   recommendations?: Array<{ category: string; title: string; recommendation: string; next_action: string; limitations: string[]; references: Array<{ id: string; title: string; url: string }> }>;
   analysisSensor?: SensorReading | null;
+}
+
+export interface ReportSections {
+  executive_summary: string; fruit_observation: string; leaf_observation: string; observation_source: string;
+  harvest_status: string; harvest_recommendation: string; fruit_counts: Record<string, number> | null;
+  air_temperature_c: number | null; air_humidity_pct: number | null; sensor_source: string; sensor_mode: string;
+  weather_description: string | null; weather_temperature_c: number | null; weather_source: string; weather_mode: string;
+  watering: string; watering_evidence: string[]; fertilizer: string; fertilizer_limitations: string[];
+  next_actions: string[]; limitations: string[]; conclusion: string;
 }
 
 export interface WeatherDay {

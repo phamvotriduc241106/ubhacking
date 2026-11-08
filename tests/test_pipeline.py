@@ -41,11 +41,36 @@ def test_webp_is_reencoded_as_jpeg_for_vision(monkeypatch):
 def test_report_still_runs_when_vision_times_out(monkeypatch):
     monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(None, 'timeout')))
     monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
-    monkeypatch.setattr('backend.services.report_generator.write_report', AsyncMock(return_value=('Report text', 'available')))
+    monkeypatch.setattr('backend.services.report_generator.write_report', AsyncMock(return_value=('{"executive_summary":"A manual check is needed before making a harvest decision.","conclusion":"Use these observations as a guide and check the plant in person."}', 'available')))
     data = post().json()
     assert data['data_sources']['gemini_vision'] == 'timeout'
     assert data['gemini_observation'] is None
     assert data['report']['source'] == 'gemini'
+    assert data['report']['sections']['harvest_status'] == data['harvest']['status']
+
+
+def test_structured_report_fallback_preserves_provenance_and_missing_data(monkeypatch):
+    monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
+    data = post(manual_temperature_c='22', manual_humidity_pct='60').json()
+    report = data['report']
+    assert report['source'] == 'deterministic' and report['text']
+    sections = report['sections']
+    assert sections['fruit_counts'] is None
+    assert sections['sensor_mode'] == 'manual' and sections['air_temperature_c'] == 22
+    assert sections['harvest_status'] == data['harvest']['status']
+    assert sections['watering'] == data['watering']['recommendation']
+    assert any('food safety' in item for item in sections['limitations'])
+
+
+def test_report_flags_raw_rotten_and_filters_unverified_claims(monkeypatch):
+    monkeypatch.setattr('backend.app.infer_image', lambda _: detection('ripe', raw_label='rotten'))
+    monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(GeminiObservation(tomato_visible=True, fruit_description='99 safe to eat', leaf_description='Leaves are green'), 'available')))
+    data = post().json()
+    sections = data['report']['sections']
+    assert sections['fruit_counts']['rotten'] == 1
+    assert '99' not in sections['fruit_observation']
+    assert sections['leaf_observation'] == 'Leaves are green'
+    assert sections['harvest_status'] == 'inspect_manually'
 
 @pytest.mark.parametrize('label,stage',[('raw','green'),('half_ripe','turning'),('ripe','red')])
 def test_detection_classes(monkeypatch,label,stage):

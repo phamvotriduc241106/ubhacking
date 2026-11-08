@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Bot, CheckCircle2, ChevronRight, Droplets, FlaskConical, Leaf, Sun, Thermometer } from "lucide-react";
 import type { ReactNode } from "react";
 import { OriginBadge } from "@/components/shared/origin-badge";
+import { ReportTemplate } from "./report-template";
 import type { AnalysisResult, CropCondition, EnvironmentRating, Ripeness, SensorReading } from "@/lib/types";
 import { cn, formatLux } from "@/lib/utils";
 
@@ -85,7 +86,8 @@ export function ResultPanels({ result, reading, notice, preview }: { result: Ana
       </Panel>}
       {isBackend && result.report && <Panel title="Farmer report" icon={<Bot className="h-3.5 w-3.5" />} delay={0.04}>
         <p className="text-xs font-semibold text-muted-foreground">{result.report.source === "gemini" ? "Gemini-generated report — review against evidence below" : `Rule-based fallback · Gemini ${result.report.gemini_status.replace(/_/g," ")}`}</p>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p>
+        {result.report.sections && <><div className="my-4"><ReportTemplate result={result} sections={result.report.sections} /></div><button type="button" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" onClick={() => window.print()}>Print / Save as PDF</button></>}
+        <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">View raw report</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{result.report.text}</p></details>
         <button type="button" className="mt-4 text-sm font-semibold text-primary hover:underline" onClick={() => { const u=URL.createObjectURL(new Blob([result.report!.text],{type:"text/plain"})); const a=document.createElement("a"); a.href=u; a.download="folland-report.txt"; a.click(); URL.revokeObjectURL(u); }}>Download report</button>
       </Panel>}
       {isBackend && result.recommendations?.map(card => <Panel key={card.category} title={card.category} icon={<CheckCircle2 className="h-3.5 w-3.5"/>} delay={0.06}>

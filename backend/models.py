@@ -124,7 +124,38 @@ class GeminiObservation(BaseModel):
     uncertainty: str = ''
 
 
+class ReportNarrative(BaseModel):
+    executive_summary: Literal['Review the detected fruit and the recommendations below.', 'A manual check is needed before making a harvest decision.', 'Review the available observations and check the plant in person.']
+    conclusion: Literal['Use these observations as a guide and check the plant in person.', 'Review the recommendations and inspect the plant before taking action.']
+
+
+class ReportSections(BaseModel):
+    executive_summary: str
+    fruit_observation: str
+    leaf_observation: str
+    observation_source: Literal['AI-predicted', 'simulated', 'unavailable']
+    harvest_status: str
+    harvest_recommendation: str
+    fruit_counts: Optional[dict[str, int]] = None
+    air_temperature_c: Optional[float] = None
+    air_humidity_pct: Optional[float] = None
+    sensor_source: str
+    sensor_mode: str
+    weather_description: Optional[str] = None
+    weather_temperature_c: Optional[float] = None
+    weather_source: str
+    weather_mode: str
+    watering: str
+    watering_evidence: List[str]
+    fertilizer: str
+    fertilizer_limitations: List[str]
+    next_actions: List[str]
+    limitations: List[str]
+    conclusion: str
+
+
 class FarmerReport(BaseModel):
     gemini_status: str = 'unavailable'
     source: Literal['gemini', 'deterministic']
     text: str
+    sections: Optional[ReportSections] = None
