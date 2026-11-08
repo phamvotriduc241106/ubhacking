@@ -23,6 +23,30 @@ def external_fallback(monkeypatch):
 def post(**fields):
     return client.post('/api/analyze',data=fields,files={'image':('tomato.jpg',photo(),'image/jpeg')})
 
+
+def test_webp_is_reencoded_as_jpeg_for_vision(monkeypatch):
+    image = BytesIO()
+    Image.new('RGB', (40, 40), 'red').save(image, 'WEBP')
+    vision = AsyncMock(return_value=(None, 'timeout'))
+    monkeypatch.setattr('backend.app.observe', vision)
+    monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
+    response = client.post('/api/analyze', files={'image': ('tomato.webp', image.getvalue(), 'image/webp')})
+    assert response.status_code == 200
+    image_bytes, mime, _ = vision.await_args.args
+    assert mime == 'image/jpeg' and Image.open(BytesIO(image_bytes)).format == 'JPEG'
+    assert response.json()['data_sources']['gemini_vision'] == 'timeout'
+    assert response.json()['report']['source'] == 'deterministic'
+
+
+def test_report_still_runs_when_vision_times_out(monkeypatch):
+    monkeypatch.setattr('backend.app.observe', AsyncMock(return_value=(None, 'timeout')))
+    monkeypatch.setattr('backend.app.infer_image', lambda _: {'status': 'unavailable', 'message': 'missing', 'detections': [], 'counts': {}})
+    monkeypatch.setattr('backend.services.report_generator.write_report', AsyncMock(return_value=('Report text', 'available')))
+    data = post().json()
+    assert data['data_sources']['gemini_vision'] == 'timeout'
+    assert data['gemini_observation'] is None
+    assert data['report']['source'] == 'gemini'
+
 @pytest.mark.parametrize('label,stage',[('raw','green'),('half_ripe','turning'),('ripe','red')])
 def test_detection_classes(monkeypatch,label,stage):
     monkeypatch.setattr('backend.app.infer_image',lambda _:detection(label))

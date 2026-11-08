@@ -14,6 +14,8 @@ cp .env.example .env
 
 Edit `.env` privately and set `GEMINI_API_KEY` to a valid Gemini API key. Do not put keys into frontend code or commit them. The backend reads process environment variables and the root `.env`; existing process variables take precedence. To use the optional USB serial feed, set `FOLLAND_SERIAL_PORT` to the detected device path. Do not guess hardware wiring; see the original proposal.
 
+Gemini vision uses up to two attempts with a 40-second per-attempt timeout and a 65-second total request budget by default. Set `GEMINI_VISION_TIMEOUT_SECONDS` (1–60), `GEMINI_VISION_TOTAL_TIMEOUT_SECONDS` (1–90), and `GEMINI_VISION_MAX_ATTEMPTS` (1–3) in the backend environment to change these limits. Invalid values use defaults. SDK retries are disabled for vision; only timeouts, rate limits, and selected server errors are retried within the total budget. A separate report call can take up to 25 seconds after vision. Logs record the attempt, elapsed time, outcome and safe HTTP error code, without the key, image, prompt, or provider error text. A `timeout` means the vision deadline expired; it does not establish the provider-side cause. The endpoint retains its deterministic fallback when Gemini is unavailable.
+
 Start the backend:
 
 ```bash
